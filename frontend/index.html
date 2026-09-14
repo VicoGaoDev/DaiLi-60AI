@@ -9,17 +9,17 @@
         color-scheme: light;
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
           "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
-        background: #fffaf4;
-        color: #6b5436;
-        --boot-page-bg: #fffaf4;
-        --boot-page-gradient: linear-gradient(180deg, #fff8ee 0%, #fffdf9 100%);
-        --boot-page-glow: rgba(255, 199, 103, 0.16);
-        --boot-brand-start: #ffd06d;
-        --boot-brand-end: #ffaf29;
-        --boot-brand-text: #523713;
-        --boot-brand-shadow: rgba(255, 175, 41, 0.22);
-        --boot-accent: #ffab25;
-        --boot-text: #8c7458;
+        background: #fffeee;
+        color: #2f3f3e;
+        --boot-page-bg: #fffeee;
+        --boot-page-gradient: #fffeee;
+        --boot-page-glow: transparent;
+        --boot-brand-start: #1a8f92;
+        --boot-brand-end: #00797c;
+        --boot-brand-text: #fffeee;
+        --boot-brand-shadow: rgba(0, 121, 124, 0.22);
+        --boot-accent: #00797c;
+        --boot-text: #5a6e6c;
       }
 
       html[data-theme="dark"] {
@@ -216,19 +216,20 @@
         try {
           var theme = window.localStorage.getItem("banana-web-theme");
           if (
-            theme === "warm" ||
-            theme === "jade" ||
-            theme === "iris" ||
-            theme === "cyan" ||
-            theme === "mauve" ||
-            theme === "alum" ||
-            theme === "mist" ||
-            theme === "dark" ||
-            theme === "midnight"
+            theme !== "warm" &&
+            theme !== "jade" &&
+            theme !== "iris" &&
+            theme !== "cyan" &&
+            theme !== "mauve" &&
+            theme !== "alum" &&
+            theme !== "mist" &&
+            theme !== "dark" &&
+            theme !== "midnight"
           ) {
-            document.documentElement.setAttribute("data-theme", theme);
-            document.documentElement.style.colorScheme = theme === "midnight" ? "dark" : "light";
+            theme = "jade";
           }
+          document.documentElement.setAttribute("data-theme", theme);
+          document.documentElement.style.colorScheme = theme === "midnight" ? "dark" : "light";
         } catch (error) {}
       })();
     </script>

@@ -128,7 +128,7 @@ export const appThemes = {
 export type AppThemeName = keyof typeof appThemes;
 export type AppThemeMeta = (typeof appThemes)[AppThemeName];
 
-export const DEFAULT_APP_THEME: AppThemeName = "warm";
+export const DEFAULT_APP_THEME: AppThemeName = "jade";
 
 export const appThemeList = Object.values(appThemes) as AppThemeMeta[];
 

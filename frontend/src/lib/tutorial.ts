@@ -35,7 +35,7 @@ export const tutorialModuleMeta: Record<
   },
 };
 
-export const tutorialNavOrder: TutorialModule[] = ["general", "chat", "generate", "video", "canvas"];
+export const tutorialNavOrder: TutorialModule[] = ["general", "chat", "generate", "canvas"];
 
 export const generalTutorialSections = [
   { id: "redeem", label: "1. 兑换积分" },
@@ -92,14 +92,13 @@ export const canvasTutorialSections = [
   { id: "projects", label: "2. 新建与管理画布" },
   { id: "navigate", label: "3. 浏览与缩放" },
   { id: "image-generate", label: "4. 在画布里生图" },
-  { id: "video-generate", label: "5. 在画布里生视频" },
-  { id: "free-nodes", label: "6. 添加自由节点" },
-  { id: "node-actions", label: "7. 处理节点结果" },
-  { id: "references", label: "8. 选择参考图" },
-  { id: "groups", label: "9. 分组与关联线" },
-  { id: "search-arrange", label: "10. 搜索与一键整理" },
-  { id: "assets-feedback", label: "11. 素材与反馈" },
-  { id: "tips", label: "12. 使用建议" },
+  { id: "free-nodes", label: "5. 添加自由节点" },
+  { id: "node-actions", label: "6. 处理节点结果" },
+  { id: "references", label: "7. 选择参考图" },
+  { id: "groups", label: "8. 分组与关联线" },
+  { id: "search-arrange", label: "9. 搜索与一键整理" },
+  { id: "assets-feedback", label: "10. 素材与反馈" },
+  { id: "tips", label: "11. 使用建议" },
 ] as const;
 
 export function getTutorialSections(module: TutorialModule) {
@@ -116,6 +115,7 @@ export function isTutorialModule(value: string | undefined): value is TutorialMo
 }
 
 export function resolveTutorialModule(value: string | undefined): TutorialModule {
+  if (value === "video") return DEFAULT_TUTORIAL_MODULE;
   return isTutorialModule(value) ? value : DEFAULT_TUTORIAL_MODULE;
 }
 

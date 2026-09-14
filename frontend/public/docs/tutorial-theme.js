@@ -3,7 +3,7 @@
   var THEMES = { warm: true, jade: true, iris: true, cyan: true, mauve: true, alum: true, mist: true, dark: true, midnight: true };
 
   function applyTheme(theme) {
-    var name = THEMES[theme] ? theme : "warm";
+    var name = THEMES[theme] ? theme : "jade";
     document.documentElement.setAttribute("data-theme", name);
     document.documentElement.style.colorScheme = name === "midnight" ? "dark" : "light";
   }
@@ -18,9 +18,9 @@
       /* ignore cross-origin */
     }
     try {
-      return localStorage.getItem(STORAGE_KEY) || "warm";
+      return localStorage.getItem(STORAGE_KEY) || "jade";
     } catch (error) {
-      return "warm";
+      return "jade";
     }
   }
 

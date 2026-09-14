@@ -40,7 +40,8 @@ function handleDockTabEnabledChange(enabled: boolean) {
 watch(
   () => route.params.module,
   (module) => {
-    if (!isTutorialModule(String(module || ""))) {
+    const nextModule = String(module || "");
+    if (nextModule === "video" || !isTutorialModule(nextModule)) {
       void router.replace(tutorialModuleMeta[DEFAULT_TUTORIAL_MODULE].path);
     }
   },

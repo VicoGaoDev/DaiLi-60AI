@@ -61,6 +61,10 @@ const router = createRouter({
           redirect: "/tutorial/general",
         },
         {
+          path: "tutorial/video",
+          redirect: "/tutorial/general",
+        },
+        {
           path: "tutorial/:module",
           name: "Tutorial",
           component: () => import("@/views/TutorialView.vue"),

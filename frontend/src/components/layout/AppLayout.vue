@@ -324,6 +324,9 @@ type PrimaryMenuItem = {
 type GenerateEntryMode = "textGenerate" | "imageEdit" | "inpaint" | "smartCutout" | "promptReverse";
 const GENERATE_MENU_ENTRY_EVENT = "banana:generate-menu-entry";
 const SHOW_PRIMARY_MENU_BADGES = true;
+const SHOW_VIDEO_MENU_ENTRY = false;
+const SHOW_PURCHASE_CREDITS_ENTRY = false;
+const SHOW_INVITE_REWARDS_ENTRY = false;
 const INVITE_REWARDS_BADGE_TEXT = "";
 const ADMIN_BADGE_OFFSET: [number, number] = [-8, 2];
 
@@ -361,12 +364,14 @@ const primaryMenuItems = computed<PrimaryMenuItem[]>(() => [
     badgeText: SHOW_PRIMARY_MENU_BADGES ? "新" : undefined,
   },
   { key: "generate", label: "AI 生图", iconSrc: withBaseUrl("nav-generate.svg"), icon: NavGenerateImageIcon },
-  {
-    key: "video-generate",
-    label: "AI 视频",
-    iconSrc: withBaseUrl("nav-generate.svg"),
-    icon: VideoCameraOutlined,
-  },
+  ...(SHOW_VIDEO_MENU_ENTRY
+    ? [{
+        key: "video-generate",
+        label: "AI 视频",
+        iconSrc: withBaseUrl("nav-generate.svg"),
+        icon: VideoCameraOutlined,
+      }]
+    : []),
   ...(canAccessCanvasMenu.value
     ? [{
         key: "canvas",
@@ -1491,16 +1496,7 @@ function openInviteRewardsEntry() {
 }
 
 function openPurchaseEntry() {
-  mobileDrawerOpen.value = false;
-  if (!auth.isLoggedIn) {
-    openAuthModal("login");
-    return;
-  }
-  if (!creditPurchasePlans.value.length) {
-    void loadPaymentPlans();
-  }
-  resetPurchaseState();
-  purchaseDialogOpen.value = true;
+  openRedeemEntry();
 }
 
 function getDropdownPopupContainer() {
@@ -1832,7 +1828,7 @@ watch(
         </a-menu>
 
         <div class="header-actions">
-          <a-button type="text" class="top-link-btn" @click="openPurchaseEntry">
+          <a-button v-if="SHOW_PURCHASE_CREDITS_ENTRY" type="text" class="top-link-btn" @click="openPurchaseEntry">
             <span class="purchase-credit-content">
               <PayCircleFilled class="purchase-credit-icon" />
               <span>购买积分</span>
@@ -1841,7 +1837,7 @@ watch(
           <a-button type="text" class="top-link-btn" @click="openRedeemEntry">
             兑换积分
           </a-button>
-          <a-button type="text" class="top-link-btn" @click="openInviteRewardsEntry">
+          <a-button v-if="SHOW_INVITE_REWARDS_ENTRY" type="text" class="top-link-btn" @click="openInviteRewardsEntry">
             <template #icon><ShareAltOutlined /></template>
             <span>邀请奖励</span>
             <span v-if="INVITE_REWARDS_BADGE_TEXT" class="nav-menu-new-badge">{{ INVITE_REWARDS_BADGE_TEXT }}</span>
@@ -2063,7 +2059,7 @@ watch(
       </nav>
 
       <div class="canvas-side-nav-actions">
-        <button type="button" class="canvas-side-nav-item canvas-side-nav-action" @click="openPurchaseEntry">
+        <button v-if="SHOW_PURCHASE_CREDITS_ENTRY" type="button" class="canvas-side-nav-item canvas-side-nav-action" @click="openPurchaseEntry">
           <PayCircleFilled />
           <span>购买积分</span>
         </button>
@@ -2071,7 +2067,7 @@ watch(
           <GiftOutlined />
           <span>兑换积分</span>
         </button>
-        <button type="button" class="canvas-side-nav-item canvas-side-nav-action" @click="openInviteRewardsEntry">
+        <button v-if="SHOW_INVITE_REWARDS_ENTRY" type="button" class="canvas-side-nav-item canvas-side-nav-action" @click="openInviteRewardsEntry">
           <ShareAltOutlined />
           <span>邀请奖励</span>
           <span v-if="INVITE_REWARDS_BADGE_TEXT" class="nav-menu-new-badge">{{ INVITE_REWARDS_BADGE_TEXT }}</span>
@@ -2189,7 +2185,7 @@ watch(
       </div>
 
       <div class="canvas-side-nav-footer">
-        <button v-if="auth.isLoggedIn" type="button" class="canvas-side-credit-pill" title="购买积分" @click="openPurchaseEntry">
+        <button v-if="auth.isLoggedIn" type="button" class="canvas-side-credit-pill" title="兑换积分" @click="openRedeemEntry">
           <ThunderboltOutlined />
           <span>{{ auth.user?.credits ?? 0 }}</span>
         </button>
@@ -2390,7 +2386,7 @@ watch(
         <div class="mobile-drawer-section">
           <div class="mobile-drawer-section-title">积分服务</div>
           <div class="mobile-drawer-credit-actions">
-            <a-button block class="mobile-drawer-action-btn" @click="openPurchaseEntry">
+            <a-button v-if="SHOW_PURCHASE_CREDITS_ENTRY" block class="mobile-drawer-action-btn" @click="openPurchaseEntry">
               <span class="purchase-credit-content">
                 <PayCircleFilled class="purchase-credit-icon" />
                 <span>购买积分</span>
@@ -2400,7 +2396,7 @@ watch(
               <template #icon><GiftOutlined /></template>
               兑换积分
             </a-button>
-            <a-button block class="mobile-drawer-action-btn" @click="openInviteRewardsEntry">
+            <a-button v-if="SHOW_INVITE_REWARDS_ENTRY" block class="mobile-drawer-action-btn" @click="openInviteRewardsEntry">
               <template #icon><ShareAltOutlined /></template>
               <span>邀请奖励</span>
               <span v-if="INVITE_REWARDS_BADGE_TEXT" class="nav-menu-new-badge nav-menu-new-badge-mobile">{{ INVITE_REWARDS_BADGE_TEXT }}</span>

@@ -12,7 +12,6 @@ import {
 import {
   AppstoreOutlined,
   PictureOutlined,
-  VideoCameraOutlined,
 } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
 import { getGenerationModels } from "@/api/config";
@@ -77,15 +76,6 @@ const capabilityCards = [
     points: ["模版快速起步", "支持自定义提示词", "适合商业视觉产出"],
   },
   {
-    title: "AI 生视频",
-    eyebrow: "Video Generation",
-    desc: "把静态内容延展成动态片段，适合镜头预演、短视频内容和素材表达升级。",
-    route: "/video-generate",
-    action: "开始生视频",
-    icon: VideoCameraOutlined,
-    points: ["图像延展视频", "更适合内容传播", "减少后期试错成本"],
-  },
-  {
     title: "无限画布",
     eyebrow: "Infinite Canvas",
     desc: "把指令、素材、生成结果和修改方向放在同一块画布中，方便长期整理、比较和迭代。",
@@ -134,7 +124,6 @@ const imageUseCases = [
 const footerNavLinks = [
   { label: "创意模版", route: "/templates" },
   { label: "AI 生图", route: "/generate" },
-  { label: "AI 视频", route: "/video-generate" },
   { label: "无限画布", route: "/canvas" },
 ] as const;
 
@@ -1034,7 +1023,7 @@ onBeforeUnmount(() => {
 
 .hero-summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
