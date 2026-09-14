@@ -1,0 +1,367 @@
+{
+  "version": 4,
+  "presets": [
+    {
+      "id": "classic-portrait",
+      "name": "经典人像",
+      "group": "常用预设",
+      "thumbnail": "/generate-cameras/presets/classic-portrait.jpg",
+      "bodyId": "ff-mirrorless",
+      "lensId": "soft-portrait-prime",
+      "focalId": "focal-85",
+      "apertureId": "aperture-f1-8"
+    },
+    {
+      "id": "everyday-fifty",
+      "name": "日常标头",
+      "group": "常用预设",
+      "thumbnail": "/generate-cameras/presets/everyday-fifty.jpg",
+      "bodyId": "ff-mirrorless",
+      "lensId": "cold-sharp-prime",
+      "focalId": "focal-50",
+      "apertureId": "aperture-f1-8"
+    },
+    {
+      "id": "street-doc",
+      "name": "街头纪实",
+      "group": "常用预设",
+      "thumbnail": "/generate-cameras/presets/street-doc.jpg",
+      "bodyId": "film-35",
+      "lensId": "vintage-coated",
+      "focalId": "focal-35",
+      "apertureId": "aperture-f5-6"
+    },
+    {
+      "id": "cinema-closeup",
+      "name": "电影近景",
+      "group": "常用预设",
+      "thumbnail": "/generate-cameras/presets/cinema-closeup.jpg",
+      "bodyId": "ff-cinema-digital",
+      "lensId": "cold-sharp-prime",
+      "focalId": "focal-50",
+      "apertureId": "aperture-f2-8"
+    },
+    {
+      "id": "environmental-portrait",
+      "name": "环境人像",
+      "group": "常用预设",
+      "thumbnail": "/generate-cameras/presets/environmental-portrait.jpg",
+      "bodyId": "ff-mirrorless",
+      "lensId": "soft-portrait-prime",
+      "focalId": "focal-35",
+      "apertureId": "aperture-f2-8"
+    },
+    {
+      "id": "landscape-deep",
+      "name": "风光深焦",
+      "group": "常用预设",
+      "thumbnail": "/generate-cameras/presets/landscape-deep.jpg",
+      "bodyId": "ff-mirrorless",
+      "lensId": "cold-sharp-prime",
+      "focalId": "focal-24",
+      "apertureId": "aperture-f8"
+    },
+    {
+      "id": "anamorphic-cinema",
+      "name": "宽银幕电影",
+      "group": "常用预设",
+      "thumbnail": "/generate-cameras/presets/anamorphic-cinema.jpg",
+      "bodyId": "ff-cinema-digital",
+      "lensId": "anamorphic",
+      "focalId": "focal-35",
+      "apertureId": "aperture-f2-8"
+    },
+    {
+      "id": "medium-format-fashion",
+      "name": "中画幅时尚",
+      "group": "常用预设",
+      "thumbnail": "/generate-cameras/presets/medium-format-fashion.jpg",
+      "bodyId": "medium-format",
+      "lensId": "soft-portrait-prime",
+      "focalId": "focal-85",
+      "apertureId": "aperture-f2-8"
+    },
+    {
+      "id": "ecommerce-catalog",
+      "name": "白底主图",
+      "group": "电商拍摄",
+      "thumbnail": "/generate-cameras/presets/ecommerce-catalog.jpg",
+      "bodyId": "ff-mirrorless",
+      "lensId": "cold-sharp-prime",
+      "focalId": "focal-50",
+      "apertureId": "aperture-f8"
+    },
+    {
+      "id": "ecommerce-detail",
+      "name": "产品特写",
+      "group": "电商拍摄",
+      "thumbnail": "/generate-cameras/presets/ecommerce-detail.jpg",
+      "bodyId": "ff-mirrorless",
+      "lensId": "macro",
+      "focalId": "focal-50",
+      "apertureId": "aperture-f8"
+    },
+    {
+      "id": "ecommerce-lifestyle",
+      "name": "场景种草",
+      "group": "电商拍摄",
+      "thumbnail": "/generate-cameras/presets/ecommerce-lifestyle.jpg",
+      "bodyId": "ff-mirrorless",
+      "lensId": "standard-zoom",
+      "focalId": "focal-35",
+      "apertureId": "aperture-f4"
+    },
+    {
+      "id": "ecommerce-apparel",
+      "name": "服饰上身",
+      "group": "电商拍摄",
+      "thumbnail": "/generate-cameras/presets/ecommerce-apparel.jpg",
+      "bodyId": "ff-mirrorless",
+      "lensId": "soft-portrait-prime",
+      "focalId": "focal-85",
+      "apertureId": "aperture-f4"
+    },
+    {
+      "id": "ecommerce-jewelry",
+      "name": "珠宝静物",
+      "group": "电商拍摄",
+      "thumbnail": "/generate-cameras/presets/ecommerce-jewelry.jpg",
+      "bodyId": "medium-format",
+      "lensId": "macro",
+      "focalId": "focal-85",
+      "apertureId": "aperture-f8"
+    },
+    {
+      "id": "ecommerce-flatlay",
+      "name": "桌面俯拍",
+      "group": "电商拍摄",
+      "thumbnail": "/generate-cameras/presets/ecommerce-flatlay.jpg",
+      "bodyId": "ff-mirrorless",
+      "lensId": "cold-sharp-prime",
+      "focalId": "focal-35",
+      "apertureId": "aperture-f5-6"
+    }
+  ],
+  "categories": [
+    {
+      "id": "body",
+      "name": "机身",
+      "items": [
+        {
+          "id": "ff-cinema-digital",
+          "name": "全画幅电影数字",
+          "prompt": "Camera body: full-frame digital cinema camera, wide dynamic range, clean shadows, cinematic highlight roll-off, fine digital texture.",
+          "thumbnail": "/generate-cameras/body/ff-cinema-digital.jpg"
+        },
+        {
+          "id": "ff-mirrorless",
+          "name": "全画幅微单",
+          "prompt": "Camera body: full-frame mirrorless stills camera, high resolution, natural color science, crisp contemporary digital look.",
+          "thumbnail": "/generate-cameras/body/ff-mirrorless.jpg"
+        },
+        {
+          "id": "ff-dslr",
+          "name": "全画幅单反",
+          "prompt": "Camera body: full-frame DSLR, optical-viewfinder stills look, punchy contrast, familiar modern photo rendering.",
+          "thumbnail": "/generate-cameras/body/ff-dslr.jpg"
+        },
+        {
+          "id": "medium-format",
+          "name": "中画幅",
+          "prompt": "Camera body: medium-format digital, large sensor smoothness, creamy tones, luxurious detail, shallow-plane elegance.",
+          "thumbnail": "/generate-cameras/body/medium-format.jpg"
+        },
+        {
+          "id": "aps-c",
+          "name": "半画幅",
+          "prompt": "Camera body: APS-C crop-sensor camera, slightly tighter field of view, snappy everyday digital capture.",
+          "thumbnail": "/generate-cameras/body/aps-c.jpg"
+        },
+        {
+          "id": "film-35",
+          "name": "35mm 胶片",
+          "prompt": "Camera body: 35mm analog film camera, organic grain, gentle highlight bloom, tactile photochemical color.",
+          "thumbnail": "/generate-cameras/body/film-35.jpg"
+        },
+        {
+          "id": "film-16",
+          "name": "16mm 胶片",
+          "prompt": "Camera body: 16mm motion-picture film, visible grain, softer resolution, documentary cinema texture.",
+          "thumbnail": "/generate-cameras/body/film-16.jpg"
+        },
+        {
+          "id": "phone",
+          "name": "手机",
+          "prompt": "Camera body: modern smartphone camera, computational sharpness, boosted local contrast, slightly over-processed mobile look.",
+          "thumbnail": "/generate-cameras/body/phone.jpg"
+        },
+        {
+          "id": "cctv",
+          "name": "监控感",
+          "prompt": "Camera body: surveillance camera look, flat wide coverage, lower fidelity, slightly harsh electronic imaging.",
+          "thumbnail": "/generate-cameras/body/cctv.jpg"
+        }
+      ]
+    },
+    {
+      "id": "lens",
+      "name": "镜头",
+      "items": [
+        {
+          "id": "cold-sharp-prime",
+          "name": "冷峻锐利定焦",
+          "prompt": "Lens: cold sharp prime lens, high microcontrast, crisp edges, clinical modern glass, minimal haze.",
+          "thumbnail": "/generate-cameras/lens/cold-sharp-prime.jpg"
+        },
+        {
+          "id": "soft-portrait-prime",
+          "name": "柔和人像定焦",
+          "prompt": "Lens: soft portrait prime, gentle falloff, creamy subject rendering, flattering skin, romantic focus.",
+          "thumbnail": "/generate-cameras/lens/soft-portrait-prime.jpg"
+        },
+        {
+          "id": "vintage-coated",
+          "name": "复古镀膜",
+          "prompt": "Lens: vintage coated glass, warm flares, lower contrast, slightly dreamy halation, old-school character.",
+          "thumbnail": "/generate-cameras/lens/vintage-coated.jpg"
+        },
+        {
+          "id": "anamorphic",
+          "name": "变形宽银幕",
+          "prompt": "Lens: anamorphic cinema lens, oval bokeh, horizontal flares, widescreen distortion, theatrical squeeze look.",
+          "thumbnail": "/generate-cameras/lens/anamorphic.jpg"
+        },
+        {
+          "id": "standard-zoom",
+          "name": "标准变焦",
+          "prompt": "Lens: standard zoom, versatile everyday coverage, balanced sharpness, neutral modern zoom rendering.",
+          "thumbnail": "/generate-cameras/lens/standard-zoom.jpg"
+        },
+        {
+          "id": "tele-compress",
+          "name": "长焦压缩",
+          "prompt": "Lens: long telephoto compression, stacked background, isolated subject, compressed spatial depth.",
+          "thumbnail": "/generate-cameras/lens/tele-compress.jpg"
+        },
+        {
+          "id": "macro",
+          "name": "微距",
+          "prompt": "Lens: macro lens, extreme close-up detail, thin focus plane, magnified texture, intimate scale.",
+          "thumbnail": "/generate-cameras/lens/macro.jpg"
+        },
+        {
+          "id": "fisheye",
+          "name": "鱼眼",
+          "prompt": "Lens: fisheye lens, strong barrel distortion, spherical wide field, exaggerated curved perspective.",
+          "thumbnail": "/generate-cameras/lens/fisheye.jpg"
+        }
+      ]
+    },
+    {
+      "id": "focal",
+      "name": "焦距",
+      "items": [
+        {
+          "id": "focal-8",
+          "name": "8mm",
+          "prompt": "Focal length: 8mm ultra-wide, extreme perspective stretch, immersive near-far distortion."
+        },
+        {
+          "id": "focal-14",
+          "name": "14mm",
+          "prompt": "Focal length: 14mm ultra-wide, dramatic environment, stretched foreground, expansive space."
+        },
+        {
+          "id": "focal-24",
+          "name": "24mm",
+          "prompt": "Focal length: 24mm wide angle, environmental context, natural wide scene, slight perspective punch."
+        },
+        {
+          "id": "focal-35",
+          "name": "35mm",
+          "prompt": "Focal length: 35mm, documentary field of view, natural human perspective, versatile framing."
+        },
+        {
+          "id": "focal-50",
+          "name": "50mm",
+          "prompt": "Focal length: 50mm standard, familiar eye-like perspective, balanced subject and background."
+        },
+        {
+          "id": "focal-85",
+          "name": "85mm",
+          "prompt": "Focal length: 85mm portrait, compressed background, flattering subject distance, tight head-and-shoulders feel."
+        },
+        {
+          "id": "focal-135",
+          "name": "135mm",
+          "prompt": "Focal length: 135mm short telephoto, stronger compression, isolated subject, distant background wash."
+        },
+        {
+          "id": "focal-200",
+          "name": "200mm",
+          "prompt": "Focal length: 200mm telephoto, heavy compression, very tight framing, far-away stacked scenery."
+        }
+      ]
+    },
+    {
+      "id": "aperture",
+      "name": "光圈",
+      "items": [
+        {
+          "id": "aperture-f1-2",
+          "name": "f/1.2",
+          "prompt": "Aperture: f/1.2, extremely shallow depth of field, large creamy bokeh, razor-thin focus.",
+          "thumbnail": "/generate-cameras/aperture/aperture-f1-2.jpg"
+        },
+        {
+          "id": "aperture-f1-4",
+          "name": "f/1.4",
+          "prompt": "Aperture: f/1.4, very shallow depth of field, soft background melt, bright wide-open look.",
+          "thumbnail": "/generate-cameras/aperture/aperture-f1-4.jpg"
+        },
+        {
+          "id": "aperture-f1-8",
+          "name": "f/1.8",
+          "prompt": "Aperture: f/1.8, shallow portrait depth, subject pop, gentle background blur.",
+          "thumbnail": "/generate-cameras/aperture/aperture-f1-8.jpg"
+        },
+        {
+          "id": "aperture-f2-8",
+          "name": "f/2.8",
+          "prompt": "Aperture: f/2.8, moderate subject separation, usable sharpness, cinematic mid-wide opening.",
+          "thumbnail": "/generate-cameras/aperture/aperture-f2-8.jpg"
+        },
+        {
+          "id": "aperture-f4",
+          "name": "f/4",
+          "prompt": "Aperture: f/4, balanced depth, more environment readable, controlled background softness.",
+          "thumbnail": "/generate-cameras/aperture/aperture-f4.jpg"
+        },
+        {
+          "id": "aperture-f5-6",
+          "name": "f/5.6",
+          "prompt": "Aperture: f/5.6, deeper focus, more scene detail retained, everyday documentary stop.",
+          "thumbnail": "/generate-cameras/aperture/aperture-f5-6.jpg"
+        },
+        {
+          "id": "aperture-f8",
+          "name": "f/8",
+          "prompt": "Aperture: f/8, deep focus, high overall sharpness, landscape-style clarity.",
+          "thumbnail": "/generate-cameras/aperture/aperture-f8.jpg"
+        },
+        {
+          "id": "aperture-f11",
+          "name": "f/11",
+          "prompt": "Aperture: f/11, very deep focus, foreground and background both readable, small-aperture crispness.",
+          "thumbnail": "/generate-cameras/aperture/aperture-f11.jpg"
+        },
+        {
+          "id": "aperture-f16",
+          "name": "f/16",
+          "prompt": "Aperture: f/16, near-total depth of field, everything held sharp, sunstar-friendly small aperture.",
+          "thumbnail": "/generate-cameras/aperture/aperture-f16.jpg"
+        }
+      ]
+    }
+  ]
+}

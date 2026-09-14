@@ -1,0 +1,78 @@
+<svg width="474" height="376" viewBox="0 0 474 376" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="taskGlowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(146 78) rotate(44) scale(292 210)">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.58" stop-color="#FFFDFC"/>
+      <stop offset="1" stop-color="#FFF9F0"/>
+    </radialGradient>
+    <radialGradient id="taskGlowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(342 302) rotate(-133) scale(270 190)">
+      <stop stop-color="#F3FEFA" stop-opacity="0.5"/>
+      <stop offset="0.45" stop-color="#FFFDF7" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="taskWaveA" x1="58" y1="143" x2="421" y2="143" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF0CF" stop-opacity="0.66"/>
+      <stop offset="0.46" stop-color="#E6FBF4" stop-opacity="0.68"/>
+      <stop offset="1" stop-color="#FFF9E8" stop-opacity="0.62"/>
+    </linearGradient>
+    <linearGradient id="taskWaveB" x1="60" y1="204" x2="418" y2="204" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EAFBF5" stop-opacity="0.64"/>
+      <stop offset="0.48" stop-color="#BDF0E6" stop-opacity="0.68"/>
+      <stop offset="1" stop-color="#FFF0D2" stop-opacity="0.58"/>
+    </linearGradient>
+    <linearGradient id="taskWaveC" x1="63" y1="264" x2="412" y2="264" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8E7" stop-opacity="0.66"/>
+      <stop offset="0.5" stop-color="#E9FBF4" stop-opacity="0.66"/>
+      <stop offset="1" stop-color="#FFF0D3" stop-opacity="0.58"/>
+    </linearGradient>
+    <linearGradient id="cardWash" x1="139" y1="113" x2="340" y2="218" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.74"/>
+      <stop offset="1" stop-color="#FFF6E7" stop-opacity="0.42"/>
+    </linearGradient>
+    <filter id="softWaveBlur" x="39" y="88" width="396" height="221" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <filter id="floatingShadow" x="116" y="90" width="246" height="147" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#D9B46E" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <rect width="474" height="376" rx="30" fill="url(#taskGlowA)"/>
+  <rect width="474" height="376" rx="30" fill="url(#taskGlowB)"/>
+  <circle cx="74" cy="58" r="7" fill="#FFE3A8" fill-opacity="0.3"/>
+  <circle cx="411" cy="72" r="10" fill="#CFF2E8" fill-opacity="0.3"/>
+  <circle cx="396" cy="319" r="6" fill="#F9D99A" fill-opacity="0.26"/>
+  <circle cx="54" cy="302" r="9" fill="#DDF6EC" fill-opacity="0.28"/>
+
+  <g filter="url(#softWaveBlur)">
+    <path d="M84 137C121 111 164 117 206 130C249 143 286 126 328 127C364 128 392 139 421 158C385 185 349 196 303 196C256 196 218 181 176 176C135 171 105 163 58 164C64 154 73 145 84 137Z" fill="url(#taskWaveA)"/>
+    <path d="M74 190C112 168 153 171 198 180C241 189 283 190 326 177C364 166 394 176 418 202C382 227 344 235 299 235C253 235 216 226 174 222C132 218 96 207 60 202C64 198 69 194 74 190Z" fill="url(#taskWaveB)"/>
+    <path d="M92 250C135 229 179 235 224 244C269 253 311 253 356 236C378 228 397 232 412 247C382 278 345 295 299 296C253 297 215 278 173 280C127 282 94 277 63 258C72 256 82 253 92 250Z" fill="url(#taskWaveC)"/>
+  </g>
+
+  <path d="M74 191C112 172 153 174 198 182C240 190 283 190 326 178C364 168 394 177 417 202C383 224 344 235 299 235C253 235 216 226 174 222C132 218 96 208 60 202C64 198 69 194 74 191Z" fill="url(#taskWaveB)"/>
+  <path d="M92 251C135 230 179 236 224 245C269 254 312 253 356 237C378 229 397 233 412 248C382 278 345 294 299 296C253 297 215 278 173 280C128 282 95 277 63 259C72 256 82 253 92 251Z" fill="url(#taskWaveC)"/>
+  <path d="M84 138C121 112 164 118 206 131C249 144 286 127 328 128C364 129 392 140 421 159C385 185 349 196 303 196C256 196 218 182 176 177C135 172 105 164 58 165C64 155 73 146 84 138Z" fill="url(#taskWaveA)"/>
+
+  <g filter="url(#floatingShadow)">
+    <g transform="translate(136 112) rotate(-8)">
+      <rect width="93" height="62" rx="14" fill="url(#cardWash)"/>
+      <path d="M20 41C31 30 38 25 48 34C55 40 62 28 73 20" stroke="#F3B24E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.62"/>
+      <circle cx="28" cy="22" r="6" fill="#A7E6D8" fill-opacity="0.84"/>
+    </g>
+    <g transform="translate(247 111) rotate(7)">
+      <rect width="75" height="54" rx="13" fill="url(#cardWash)" fill-opacity="0.92"/>
+      <path d="M16 36C26 27 34 22 43 30C49 35 56 25 62 20" stroke="#7FD8CC" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+      <circle cx="24" cy="20" r="5" fill="#FFD27A" fill-opacity="0.86"/>
+    </g>
+    <g transform="translate(191 169) rotate(4)">
+      <rect width="98" height="58" rx="15" fill="url(#cardWash)" fill-opacity="0.82"/>
+      <path d="M19 40C31 28 40 25 51 35C59 42 68 29 80 21" stroke="#D8AE58" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.54"/>
+      <circle cx="31" cy="21" r="6" fill="#BBEFE2" fill-opacity="0.8"/>
+    </g>
+  </g>
+
+  <path d="M112 116C123 107 134 107 146 114" stroke="#F5CB7F" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  <path d="M330 239C347 229 363 229 379 239" stroke="#9FE3D7" stroke-width="5" stroke-linecap="round" opacity="0.48"/>
+  <path d="M172 296C187 289 203 289 218 296" stroke="#F4C879" stroke-width="5" stroke-linecap="round" opacity="0.42"/>
+</svg>

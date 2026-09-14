@@ -1,0 +1,1 @@
+import{bW as n}from"./index-BifiXCp8.js";function a(t,r){const o=n(t||"");if(!o)return!1;const e=document.createElement("a");return e.href=o,r&&(e.download=r),document.body.appendChild(e),e.click(),e.remove(),!0}export{a as t};

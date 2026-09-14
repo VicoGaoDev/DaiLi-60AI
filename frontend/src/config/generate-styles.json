@@ -1,0 +1,192 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "color",
+      "name": "色彩风格",
+      "items": [
+        {
+          "id": "natural-clean",
+          "name": "自然干净",
+          "prompt": "Color grading: natural clean look, balanced saturation, true-to-life skin tones, neutral white balance, clear midtones, no heavy color cast.",
+          "thumbnail": "/generate-styles/color/natural-clean.jpg",
+          "preview": { "from": "#f3e6d8", "to": "#8f9a86" }
+        },
+        {
+          "id": "bleach-warm",
+          "name": "漂白暖调",
+          "prompt": "Color grading: bleached warm tones, lifted blacks, creamy highlights, soft amber warmth, slightly faded film wash, low contrast pastel heat.",
+          "thumbnail": "/generate-styles/color/bleach-warm.jpg",
+          "preview": { "from": "#fff1d6", "to": "#d9a36a" }
+        },
+        {
+          "id": "super-neon",
+          "name": "超霓虹",
+          "prompt": "Color grading: super neon, electric magenta and cyan glow, saturated night-club palette, luminous rim colors, high-energy urban night look.",
+          "thumbnail": "/generate-styles/color/super-neon.jpg",
+          "preview": { "from": "#ff2bd6", "to": "#18f0ff" }
+        },
+        {
+          "id": "teal-orange-epic",
+          "name": "青橙史诗",
+          "prompt": "Color grading: teal and orange epic cinematic grade, cool shadows, warm skin and highlights, blockbuster contrast, polished Hollywood look.",
+          "thumbnail": "/generate-styles/color/teal-orange-epic.jpg",
+          "preview": { "from": "#0f6f7a", "to": "#e67a2a" }
+        },
+        {
+          "id": "sodium-decay",
+          "name": "钠灯衰变",
+          "prompt": "Color grading: decaying sodium-vapor streetlight look, sickly amber-orange cast, muddy greens, tired night atmosphere, low-fi urban decay.",
+          "thumbnail": "/generate-styles/color/sodium-decay.jpg",
+          "preview": { "from": "#3b2a14", "to": "#c48a2a" }
+        },
+        {
+          "id": "cold-steel",
+          "name": "冷钢",
+          "prompt": "Color grading: cold steel, desaturated blue-gray metals, icy highlights, hard industrial palette, crisp cool contrast, no warmth.",
+          "thumbnail": "/generate-styles/color/cold-steel.jpg",
+          "preview": { "from": "#d7dee6", "to": "#4b5c6b" }
+        },
+        {
+          "id": "bleach-bypass",
+          "name": "漂白跳过",
+          "prompt": "Color grading: bleach bypass, crushed color saturation, silvery highlights, gritty contrast, metallic midtones, documentary war-film look.",
+          "thumbnail": "/generate-styles/color/bleach-bypass.jpg",
+          "preview": { "from": "#ece7de", "to": "#6d6a63" }
+        },
+        {
+          "id": "classic-bw",
+          "name": "经典黑白",
+          "prompt": "Color grading: classic black and white, full desaturation, rich grayscale, deep blacks, clean whites, timeless monochrome photography.",
+          "thumbnail": "/generate-styles/color/classic-bw.jpg",
+          "preview": { "from": "#f4f4f4", "to": "#1b1b1b" }
+        },
+        {
+          "id": "golden-hour-amber",
+          "name": "金色时光琥珀",
+          "prompt": "Color grading: golden hour amber, honeyed sunlight, warm gold highlights, soft orange wrap, romantic late-afternoon glow.",
+          "thumbnail": "/generate-styles/color/golden-hour-amber.jpg",
+          "preview": { "from": "#ffe1a3", "to": "#c46a1d" }
+        },
+        {
+          "id": "moonlight-cyan",
+          "name": "月光青",
+          "prompt": "Color grading: moonlight cyan, cool blue-green night grade, pale lunar highlights, quiet nocturnal palette, soft aquatic shadows.",
+          "thumbnail": "/generate-styles/color/moonlight-cyan.jpg",
+          "preview": { "from": "#d7f3f2", "to": "#2d6f78" }
+        },
+        {
+          "id": "scarlet-black",
+          "name": "猩红黑色",
+          "prompt": "Color grading: scarlet and black, deep crushed shadows, blood-red accents, high-contrast noir, luxurious dark crimson palette.",
+          "thumbnail": "/generate-styles/color/scarlet-black.jpg",
+          "preview": { "from": "#2a0b10", "to": "#c81c2c" }
+        },
+        {
+          "id": "emerald-gloomy",
+          "name": "翠绿阴郁",
+          "prompt": "Color grading: gloomy emerald, muted forest greens, damp moss shadows, sickly teal midtones, melancholic wet-night atmosphere.",
+          "thumbnail": "/generate-styles/color/emerald-gloomy.jpg",
+          "preview": { "from": "#0f2a22", "to": "#2f8f63" }
+        },
+        {
+          "id": "ultraviolet-twilight",
+          "name": "紫外暮色",
+          "prompt": "Color grading: ultraviolet twilight, deep violet dusk, electric purple edges, fading blue hour, surreal nightfall color wash.",
+          "thumbnail": "/generate-styles/color/ultraviolet-twilight.jpg",
+          "preview": { "from": "#1b1033", "to": "#8a4dff" }
+        },
+        {
+          "id": "retro-sepia",
+          "name": "复古褐色",
+          "prompt": "Color grading: retro sepia, aged brown vintage print, faded warm paper tone, old-photograph nostalgia, gentle yellowed highlights.",
+          "thumbnail": "/generate-styles/color/retro-sepia.jpg",
+          "preview": { "from": "#f0ddb8", "to": "#8a5a2b" }
+        }
+      ]
+    },
+    {
+      "id": "lighting",
+      "name": "光影",
+      "items": [
+        {
+          "id": "soft-cross",
+          "name": "柔和交叉",
+          "prompt": "Lighting: soft cross lighting, two gentle keys from opposite sides, wrapping diffusion, low-contrast facial modeling, even cinematic softness.",
+          "thumbnail": "/generate-styles/lighting/soft-cross.jpg",
+          "preview": { "from": "#f7efe4", "to": "#c7b7a3", "pattern": "soft" }
+        },
+        {
+          "id": "backlight",
+          "name": "逆光",
+          "prompt": "Lighting: strong backlight, glowing rim around the subject, lifted haze, luminous edges, slightly underexposed face, atmospheric reverse light.",
+          "thumbnail": "/generate-styles/lighting/backlight.jpg",
+          "preview": { "from": "#1a1a1a", "to": "#f3e7c8", "pattern": "rim" }
+        },
+        {
+          "id": "top-falloff",
+          "name": "顶光衰减",
+          "prompt": "Lighting: overhead top light with rapid falloff, bright crown and shoulders, eyes falling into shadow, dramatic ceiling source, sculpted volume.",
+          "thumbnail": "/generate-styles/lighting/top-falloff.jpg",
+          "preview": { "from": "#f2e6c8", "to": "#1c1c1c", "pattern": "top" }
+        },
+        {
+          "id": "window-light",
+          "name": "窗户光",
+          "prompt": "Lighting: natural window light from one side, soft rectangular falloff, gentle shadow on the far cheek, daylight interior portrait look.",
+          "thumbnail": "/generate-styles/lighting/window-light.jpg",
+          "preview": { "from": "#fff6e8", "to": "#8d7a63", "pattern": "soft" }
+        },
+        {
+          "id": "practical-light",
+          "name": "实景灯",
+          "prompt": "Lighting: motivated practical lights in scene, visible lamps and neon as sources, mixed color pools, lived-in cinematic interior lighting.",
+          "thumbnail": "/generate-styles/lighting/practical-light.jpg",
+          "preview": { "from": "#24180f", "to": "#f0b45a", "pattern": "soft" }
+        },
+        {
+          "id": "silhouette",
+          "name": "剪影",
+          "prompt": "Lighting: backlit silhouette, bright background halo, subject in shadow with readable facial features, soft fill on the face, rim light on hair and shoulders, not a solid black cutout.",
+          "thumbnail": "/generate-styles/lighting/silhouette.jpg",
+          "preview": { "from": "#f5e6c4", "to": "#0d0d0d", "pattern": "silhouette" }
+        },
+        {
+          "id": "rembrandt",
+          "name": "伦勃朗光",
+          "prompt": "Lighting: Rembrandt lighting, key at 45 degrees, triangular cheek highlight, deep shadow on the far side of the face, painterly chiaroscuro.",
+          "thumbnail": "/generate-styles/lighting/rembrandt.jpg",
+          "preview": { "from": "#3b2412", "to": "#e6c48a", "pattern": "soft" }
+        },
+        {
+          "id": "hard-chiaroscuro",
+          "name": "硬切分光",
+          "prompt": "Lighting: hard chiaroscuro, single hard source, razor-sharp shadow edges, extreme contrast, graphic split of light and dark.",
+          "thumbnail": "/generate-styles/lighting/hard-chiaroscuro.jpg",
+          "preview": { "from": "#111111", "to": "#f3f0e8", "pattern": "hard" }
+        },
+        {
+          "id": "rim-light",
+          "name": "轮廓光",
+          "prompt": "Lighting: rim light, thin luminous outline separating subject from background, dark core, sculpted edge highlights, premium product-portrait separation.",
+          "thumbnail": "/generate-styles/lighting/rim-light.jpg",
+          "preview": { "from": "#0f0f12", "to": "#f2d9a8", "pattern": "rim" }
+        },
+        {
+          "id": "blinds-gobo",
+          "name": "百叶窗光",
+          "prompt": "Lighting: blinds gobo, striped window-shutter shadows across the subject, graphic light bars, noir interior pattern, directional daylight cuts.",
+          "thumbnail": "/generate-styles/lighting/blinds-gobo.jpg",
+          "preview": { "from": "#d8c4a2", "to": "#2b2118", "pattern": "blinds" }
+        },
+        {
+          "id": "bottom-light",
+          "name": "底光",
+          "prompt": "Lighting: underlighting from below, inverted facial shadows, uneasy horror mood, chin and nose lit upward, unnatural dramatic lift.",
+          "thumbnail": "/generate-styles/lighting/bottom-light.jpg",
+          "preview": { "from": "#0e0e10", "to": "#f0c56a", "pattern": "bottom" }
+        }
+      ]
+    }
+  ]
+}

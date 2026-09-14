@@ -1,0 +1,55 @@
+<svg width="474" height="376" viewBox="0 0 474 376" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgA" x1="34" y1="26" x2="430" y2="350" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FFFBF6"/>
+    </linearGradient>
+    <radialGradient id="glowA1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(120 82) rotate(29) scale(210 154)">
+      <stop stop-color="#FFF1C9" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#FFE9B9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowA2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(350 286) rotate(-22) scale(200 152)">
+      <stop stop-color="#D9F7EE" stop-opacity="0.54"/>
+      <stop offset="1" stop-color="#D9F7EE" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cardA" x1="0" y1="0" x2="170" y2="124" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#FFFBF6" stop-opacity="0.82"/>
+    </linearGradient>
+    <filter id="shadowA" x="56" y="58" width="218" height="176" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#DBB26D" flood-opacity="0.22"/>
+    </filter>
+    <filter id="shadowASmall" x="244" y="170" width="164" height="132" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#DBB26D" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <rect width="474" height="376" rx="30" fill="url(#bgA)"/>
+  <rect width="474" height="376" rx="30" fill="url(#glowA1)"/>
+  <rect width="474" height="376" rx="30" fill="url(#glowA2)"/>
+
+  <circle cx="70" cy="66" r="8" fill="#FFE3A0" fill-opacity="0.42"/>
+  <circle cx="403" cy="74" r="10" fill="#CFF4E8" fill-opacity="0.42"/>
+  <circle cx="377" cy="315" r="7" fill="#FFD487" fill-opacity="0.34"/>
+  <circle cx="61" cy="301" r="6" fill="#D8F4EA" fill-opacity="0.38"/>
+
+  <g filter="url(#shadowA)">
+    <g transform="translate(74 76) rotate(-8)">
+      <rect width="170" height="128" rx="28" fill="url(#cardA)"/>
+      <rect x="24" y="22" width="122" height="84" rx="18" fill="#FFF9F0"/>
+      <circle cx="58" cy="50" r="10" fill="#FFE1A1"/>
+      <path d="M40 90L68 64L90 82L118 54L146 90" stroke="#D8AF63" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.82"/>
+      <path d="M40 90H146" stroke="#E9C989" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+    </g>
+  </g>
+
+  <g filter="url(#shadowASmall)">
+    <g transform="translate(256 182) rotate(7)">
+      <rect width="140" height="96" rx="24" fill="#FFFFFF" fill-opacity="0.82"/>
+      <rect x="18" y="16" width="104" height="64" rx="16" fill="#ECFBF5"/>
+      <circle cx="44" cy="38" r="8" fill="#C7F1E5"/>
+      <path d="M32 70L52 50L70 62L88 46L108 70" stroke="#82D9CA" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.84"/>
+      <path d="M32 70H108" stroke="#BDEDE2" stroke-width="5" stroke-linecap="round" opacity="0.58"/>
+    </g>
+  </g>
+</svg>

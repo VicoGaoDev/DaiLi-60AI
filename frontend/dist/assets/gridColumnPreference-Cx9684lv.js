@@ -1,0 +1,1 @@
+const u="generateResultColumnCount",i="historyGridColumnCount";function d(n,t,e){if(typeof window>"u")return e;const r=window.localStorage.getItem(n),o=Number(r);return t.includes(o)?o:e}function s(n,t){typeof window>"u"||window.localStorage.setItem(n,String(t))}export{u as G,i as H,d as r,s as w};

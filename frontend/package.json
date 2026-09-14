@@ -1,0 +1,38 @@
+{
+  "name": "banana-web-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "analyze": "ANALYZE=true vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
+    "@cloudbase/js-sdk": "^2.27.5",
+    "@wangeditor/editor": "^5.1.23",
+    "@wangeditor/editor-for-vue": "^5.1.12",
+    "ant-design-vue": "^4.2.6",
+    "axios": "^1.7.9",
+    "cos-js-sdk-v5": "^1.10.1",
+    "dayjs": "^1.11.13",
+    "echarts": "^6.0.0",
+    "markdown-it": "^15.0.0",
+    "pinia": "^2.3.0",
+    "qrcode": "^1.5.4",
+    "vue": "^3.5.13",
+    "vue-echarts": "^8.0.1",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "rollup-plugin-visualizer": "^6.0.5",
+    "sass": "^1.83.0",
+    "typescript": "~5.7.2",
+    "vite": "^6.2.0",
+    "vue-tsc": "^2.2.0"
+  }
+}

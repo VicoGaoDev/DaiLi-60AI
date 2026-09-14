@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>无限画布教程</title>
+  <script src="./tutorial-theme.js"></script>
+  <link rel="stylesheet" href="./tutorial-doc.css" />
+</head>
+<body>
+  <article class="doc">
+    <header class="doc-hero">
+      <h1>无限画布</h1>
+      <p>按步骤了解如何新建画布、在同一块空间里生图或生视频，以及如何用节点、分组和整理把多轮尝试放在一起。</p>
+    </header>
+
+    <section id="overview">
+      <h2>1. 进入页面与布局</h2>
+      <p>登录后，在左侧导航中点击「无限画布」，即可进入画布列表。首页的「进入无限画布」，以及 AI 生图结果区的「画布模式」，也会跳到这里。</p>
+      <figure>
+        <img loading="eager" fetchpriority="high" decoding="async" src="./tutorial/canvas-01-entry.png" alt="从导航进入无限画布" />
+        <figcaption>图 1：从导航或首页进入无限画布</figcaption>
+      </figure>
+      <p>无限画布分成两层页面：</p>
+      <ul>
+        <li><strong>画布列表</strong>：查看、新建、重命名或删除画布，也可以复制示例画布。</li>
+        <li><strong>画布工作台</strong>：在无限空间里摆放节点、提交生图或生视频任务，并继续编辑结果。</li>
+      </ul>
+      <figure>
+        <img loading="eager" decoding="async" src="./tutorial/canvas-02-list.png" alt="画布列表页面" />
+        <figcaption>图 2：画布列表，可新建或进入已有画布</figcaption>
+      </figure>
+      <p>进入工作台后，页面大致分成这几块：</p>
+      <ul>
+        <li><strong>左上角</strong>：当前画布名称，可切换、重命名或新建画布。</li>
+        <li><strong>左侧工具栏</strong>：切换选择 / 抓手、添加自由节点、打开素材、搜索节点、一键整理。</li>
+        <li><strong>底部创作区</strong>：输入提示词，切换生图 / 生视频，上传参考图并提交任务。</li>
+        <li><strong>右下角</strong>：查看缩放比例，快速缩放、复位视图或刷新画布。</li>
+        <li><strong>右上角</strong>：提交反馈，或返回画布列表。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-03-layout.png" alt="无限画布工作台布局" />
+        <figcaption>图 3：工作台左侧工具、底部创作区和右下角缩放</figcaption>
+      </figure>
+      <div class="tip">第一次进入工作台时，会看到分步引导。之后也可以在右上角「画布设置」里重新查看新手引导，或打开「操作指南」查看手势和快捷方式。</div>
+    </section>
+
+    <section id="projects">
+      <h2>2. 新建与管理画布</h2>
+      <p>每个画布都是一个独立项目，适合按主题或客户分开整理。建议一个方向用一块画布，避免节点混在一起。</p>
+      <ol>
+        <li>在画布列表点击「新建画布」，系统会创建并直接进入工作台。</li>
+        <li>还没有自己的画布时，也可以先点「示例画布」。系统会复制一份到你的账号，方便对照学习。</li>
+        <li>卡片右上角「更多」可以重命名或删除画布。删除后，该画布和其中的任务会从列表移除。</li>
+        <li>顶部搜索框可以按画布名称查找。</li>
+      </ol>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-04-projects.png" alt="新建、重命名和示例画布" />
+        <figcaption>图 4：新建画布，或从示例画布复制一份开始</figcaption>
+      </figure>
+      <p>已经在工作台里时，也可以点左上角画布名称：</p>
+      <ul>
+        <li>切换到其他画布。</li>
+        <li>重命名当前画布。</li>
+        <li>直接新建一块画布。</li>
+      </ul>
+      <div class="tip">每块画布会记住自己的视口位置和缩放。下次打开时，会回到你上次离开的位置。</div>
+    </section>
+
+    <section id="navigate">
+      <h2>3. 浏览与缩放</h2>
+      <p>画布可以无限平移和缩放。左侧工具栏先选好模式，再决定是移动视野，还是框选节点。</p>
+      <ul>
+        <li><strong>抓手</strong>：默认模式。左键拖拽空白处移动视野；滚轮以鼠标位置为中心缩放。</li>
+        <li><strong>选择</strong>：左键拖拽空白处框选节点；滚轮改为上下滚动，不触发缩放。</li>
+        <li><strong>Ctrl / Cmd + 滚轮</strong> 或 <strong>Ctrl / Cmd + +/-</strong>：缩放画布，并尽量避免带动浏览器页面缩放。</li>
+        <li>触控板可以用双指滑动来平移或缩放。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-05-navigate.png" alt="抓手、选择和缩放工具" />
+        <figcaption>图 5：左侧切换抓手 / 选择，右下角调整缩放</figcaption>
+      </figure>
+      <p>右下角还可以：</p>
+      <ul>
+        <li>查看当前缩放比例，并点「+」「-」微调。</li>
+        <li>点「复位」让当前内容回到合适的视野。</li>
+        <li>点「刷新」重新加载当前画布数据。</li>
+      </ul>
+      <p>在空白处右键，也可以放大、缩小、适应画布，或直接添加节点。</p>
+      <div class="tip">右上角「画布设置」可以切换网格或纯色背景。刚开始不熟悉手势时，随时点「操作指南」对照即可。</div>
+    </section>
+
+    <section id="image-generate">
+      <h2>4. 在画布里生图</h2>
+      <p>画布里的生图和 AI 生图页使用同一套积分、并发和任务处理。提交后，任务会出现在当前视野中心，方便继续对比和改图。默认模式是「图编辑」。</p>
+      <ol>
+        <li>点击底部输入框展开创作区。左侧图标切到图片。</li>
+        <li>选择「文生图」或「图编辑」。</li>
+        <li>写提示词。图编辑还需要先放参考图：本地上传、从「我的素材」选用，或从画布已有图片中点选。</li>
+        <li>点底部参数条，选择模型、宽高比和质量。右侧数量可设 1 到 8 张。</li>
+        <li>点击「生成」。按钮上会显示本次预计消耗的积分。</li>
+      </ol>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-06-image-generate.png" alt="画布底部生图配置" />
+        <figcaption>图 6：在底部创作区提交文生图或图编辑</figcaption>
+      </figure>
+      <p>提交后可以马上改提示词或参考图，再发下一个任务。画布空白处没有草稿时，点击空白会自动收起创作区；已经写了提示词或放了参考图时，会保持展开。</p>
+      <div class="tip">画布任务默认不会混进普通历史 / 看板预览。要回看某次尝试，直接在这块画布里找对应节点即可。</div>
+    </section>
+
+    <section id="video-generate">
+      <h2>5. 在画布里生视频</h2>
+      <p>同一块画布也能继续做视频，不必跳到单独的视频页。适合把满意的静帧立刻延展成动态片段。</p>
+      <ol>
+        <li>在底部创作区左侧切到视频图标。</li>
+        <li>选择「文生视频」或「图生视频」。</li>
+        <li>图生视频需要先放参考图；文生视频只写镜头、动作和氛围即可。</li>
+        <li>选择模型、宽高比、时长和分辨率。一次可发 1 到 4 条。</li>
+        <li>点击「生成视频」。按钮同样会显示预计积分。</li>
+      </ol>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-07-video-generate.png" alt="画布内图生视频" />
+        <figcaption>图 7：把画布里的图片带到图生视频</figcaption>
+      </figure>
+      <p>也可以先选中一张图片节点，再点「生成视频」。系统会切到图生视频，并带入当前图片。</p>
+      <div class="tip">当前存在参考图时，需要先切回图编辑或图生视频，才能继续提交。文生图 / 文生视频不要带着参考图一起发。</div>
+    </section>
+
+    <section id="free-nodes">
+      <h2>6. 添加自由节点</h2>
+      <p>除了生成任务，还可以把想法、参考图和素材直接铺在画布上，作为后续创作的起点。</p>
+      <ul>
+        <li><strong>文本节点</strong>：记下指令、分镜或待改事项。双击即可编辑，也可以用它一键回填提示词。</li>
+        <li><strong>上传图片</strong>：从本地拖入或上传，按真实宽高比展示，之后可作为参考图继续编辑。</li>
+        <li><strong>我的素材</strong>：把已保存的参考图或满意结果直接放到画布上。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-08-free-nodes.png" alt="添加文本节点和上传图片" />
+        <figcaption>图 8：用文本、上传图片或素材铺开思路</figcaption>
+      </figure>
+      <p>添加方式有三种：</p>
+      <ol>
+        <li>点左侧「+」，再选「文本节点」或「上传图片」。</li>
+        <li>在空白处右键，选「添加文本」「上传图片」或「我的素材」。</li>
+        <li>把本地图片直接拖到画布上。</li>
+      </ol>
+      <div class="tip">文本节点适合写「保留姿势、只换衣服」这类短指令。选中后点「生成图片」，提示词会回到底部创作区。</div>
+    </section>
+
+    <section id="node-actions">
+      <h2>7. 处理节点结果</h2>
+      <p>任务提交后会变成画布上的节点，显示生成中、成功或失败状态。图片可以拖动位置，右下角手柄可以拉伸大小。</p>
+      <p>单击节点后，上方会出现操作条：</p>
+      <ul>
+        <li><strong>重新生成</strong>：把当前提示词、模型和参考图回填到底部，再跑一次。</li>
+        <li><strong>编辑图片</strong>：把这张图带到图编辑，继续改。</li>
+        <li><strong>生成视频</strong>：把这张图带到图生视频。</li>
+        <li><strong>下载</strong>：保存原图或视频到本地。</li>
+        <li><strong>详细信息</strong>：查看完整参数。</li>
+        <li><strong>反馈</strong>：结果有问题时直接提交。</li>
+        <li><strong>删除</strong>：从画布移除该节点和相关连线。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-09-node-actions.png" alt="节点操作条" />
+        <figcaption>图 9：对单张结果继续编辑、生视频或下载</figcaption>
+      </figure>
+      <p>其他常用操作：</p>
+      <ul>
+        <li>双击图片预览大图；双击文本节点进入编辑。</li>
+        <li>右键节点可快速编辑、生成视频、添加到我的素材或删除。</li>
+        <li>在选择模式下框选多个节点后，可以添加分组、自动排列、生成或批量删除。</li>
+      </ul>
+      <div class="tip">服务器保留原图 15 天。满意的结果建议马上下载，或点右键「添加到我的素材」长期保存。</div>
+    </section>
+
+    <section id="references">
+      <h2>8. 选择参考图</h2>
+      <p>图编辑和图生视频必须先有参考图。画布里已经生成或上传过的图，都可以直接拿来用，不用重新找文件。</p>
+      <ol>
+        <li>切到「图编辑」或「图生视频」。</li>
+        <li>点参考图区域的加号，选择「本地上传」「我的素材」或「从画布选择」。</li>
+        <li>从画布选择时，点击画布上的图片即可加入。顶部会显示已选数量和当前模型上限。</li>
+        <li>选完后点「完成选择」，写好修改或镜头说明，再提交。</li>
+      </ol>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-10-references.png" alt="从画布选择参考图" />
+        <figcaption>图 10：从画布已有图片中多选参考图</figcaption>
+      </figure>
+      <p>参考图数量上限由当前模型决定。已经在列表里的图不会重复添加；达到上限后需要先移除一张，才能继续选。</p>
+      <div class="tip">也可以直接选中图片节点，点「编辑图片」。系统会把它设为当前参考图，并展开底部创作区。</div>
+    </section>
+
+    <section id="groups">
+      <h2>9. 分组与关联线</h2>
+      <p>多轮尝试之后，可以用分组把同一主题收在一起，用关联线看清「参考图 → 结果 → 再编辑」的关系。</p>
+      <ul>
+        <li><strong>添加分组</strong>：先切到选择模式，框选节点，再点「添加分组」。可以为分组命名。</li>
+        <li><strong>拖入 / 拖出</strong>：把节点拖进分组区域后，可选择加入分组、仅保留位置或恢复原位；拖出边界后，可确认移出分组。</li>
+        <li><strong>分组操作条</strong>：单击分组后，可以自动整理、重命名、改颜色或删除分组。删除分组不会删除里面的节点。</li>
+        <li><strong>双击分组</strong>：缩放到刚好看见整个分组。</li>
+        <li><strong>关联线</strong>：从参考节点指向新结果。分支太多时，可点「收起」折成「N 条关联」，需要时再展开。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-11-groups.png" alt="画布分组和关联线" />
+        <figcaption>图 11：用分组和关联线整理多轮分支</figcaption>
+      </figure>
+    </section>
+
+    <section id="search-arrange">
+      <h2>10. 搜索与一键整理</h2>
+      <p>节点多了以后，不必靠肉眼满画布找。左侧工具栏提供搜索和一键整理。</p>
+      <ol>
+        <li>点「搜索节点」，按任务 ID、提示词、模型或状态查找。</li>
+        <li>在结果里点一项，画布会聚焦到该节点，并缩放到 100%。</li>
+        <li>点「一键整理」前会二次确认。确认后，系统会按节点关系或类型重新横向排布并保存位置。</li>
+      </ol>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-12-search-arrange.png" alt="搜索节点和一键整理" />
+        <figcaption>图 12：搜索定位节点，或一键整理画布布局</figcaption>
+      </figure>
+      <p>如果只想整理一部分：</p>
+      <ul>
+        <li>框选若干节点后点「自动排列」，只重排当前选中项。</li>
+        <li>选中某个分组后点「自动整理」，只整理该分组内部。</li>
+      </ul>
+      <div class="tip">一键整理会覆盖当前自由摆放的位置。如果这版布局还想留着，先不要点确认。</div>
+    </section>
+
+    <section id="assets-feedback">
+      <h2>11. 素材与反馈</h2>
+      <p>常用图不用每次重新上传，使用问题也可以直接从画布提交。</p>
+      <ul>
+        <li><strong>我的素材</strong>：左侧工具栏或参考图菜单都可以打开。素材会长期保存，生图、视频和画布都能选用。</li>
+        <li><strong>添加到我的素材</strong>：在节点上右键，把满意结果或上传图收入素材库。</li>
+        <li><strong>反馈</strong>：右上角可以反馈画布本身的问题；节点操作条里的「反馈」则针对单次生成结果。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-13-assets.png" alt="我的素材和画布反馈" />
+        <figcaption>图 13：把结果加入素材，或提交画布反馈</figcaption>
+      </figure>
+    </section>
+
+    <section id="tips">
+      <h2>12. 使用建议</h2>
+      <ul>
+        <li>第一次用，可以先复制一块「示例画布」，对照节点关系再开始自己的项目。</li>
+        <li>单次快速出图用 AI 生图页；需要多轮对比、分支试错和长期整理时，再用无限画布。</li>
+        <li>先用文本节点写下目标，再生成，之后回看时更容易知道每张图为什么这样改。</li>
+        <li>整张风格要变，用图编辑；已经满意的静帧要做动态，直接在节点上点「生成视频」。</li>
+        <li>常用参考图放进「我的素材」，常用指令放进文本节点，避免每次重写。</li>
+        <li>原图有 15 天保存期限，定稿后及时下载。</li>
+        <li>积分不足时，按页面提示购买或兑换即可。左侧导航也能看到剩余积分。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/canvas-14-tips.png" alt="从生图结果进入画布模式" />
+        <figcaption>图 14：从 AI 生图结果区进入画布，继续组织多轮尝试</figcaption>
+      </figure>
+    </section>
+  </article>
+  <script src="./tutorial-doc.js"></script>
+</body>
+</html>

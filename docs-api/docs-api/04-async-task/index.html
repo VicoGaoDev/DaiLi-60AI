@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/docs-api/" />
+  <title>异步生图任务 · 80AI API 文档</title>
+  <style>/* 80AI API docs */
+:root {
+  --bg: #f6f8fb;
+  --panel: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --accent: #f59e0b;
+  --accent-soft: #fff7ed;
+  --get: #10b981;
+  --post: #3b82f6;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 12px;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+}
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 24px 18px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+a.brand {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 10px;
+  margin: -4px -6px 0;
+  padding: 4px 6px;
+}
+a.brand:hover { background: #f3f4f6; }
+.brand-title { font-size: 20px; font-weight: 700; }
+.brand-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.brand-base {
+  margin-top: 12px;
+  padding: 8px 10px;
+  background: var(--accent-soft);
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  font-size: 12px;
+  word-break: break-all;
+}
+.nav { display: flex; flex-direction: column; gap: 6px; margin-top: 24px; }
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+}
+.nav-link:hover { background: #f3f4f6; }
+.nav-link.active { background: var(--accent-soft); color: #9a3412; font-weight: 600; }
+.method {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.method.get, .page-method.get { background: var(--get); }
+.method.post, .page-method.post { background: var(--post); }
+.page-method {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: 32px 40px 48px;
+}
+.page-title { margin: 0; font-size: 22px; line-height: 1.35; font-weight: 700; }
+.doc { max-width: 920px; }
+.doc h2 {
+  font-size: 20px;
+  margin-top: 36px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.doc h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.doc p { margin: 12px 0; }
+.doc ul { padding-left: 22px; }
+.doc li { margin: 6px 0; }
+.doc blockquote {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: #fffbeb;
+  border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  color: #92400e;
+}
+.doc code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.doc strong {
+  font-weight: 700;
+  color: #111827;
+}
+.doc table strong {
+  font-weight: 700;
+  color: #111827;
+}
+.doc table table {
+  width: 100%;
+  margin: 8px 0 12px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  table-layout: fixed;
+}
+.doc table table th,
+.doc table table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.doc table table th:first-child,
+.doc table table td:first-child {
+  width: 220px;
+}
+.doc table table td:first-child code {
+  word-break: break-all;
+  white-space: normal;
+}
+.doc table table th {
+  background: #f3f4f6;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.doc table table tr:last-child td,
+.doc table table tr:last-child th {
+  border-bottom: none;
+}
+.doc table ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+.doc table li {
+  margin: 4px 0;
+}
+.doc pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  box-shadow: var(--shadow);
+  margin: 16px 0;
+}
+.doc pre code { background: transparent; padding: 0; color: inherit; font-size: 13px; }
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+.doc table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  font-size: 14px;
+}
+.doc th, .doc td {
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.doc th { background: #f9fafb; font-weight: 600; }
+.doc tr:last-child td { border-bottom: none; }
+.footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .layout { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .content { padding: 20px 16px 32px; }
+}
+</style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a class="brand" href="/docs-api/">
+        <div class="brand-title">80AI API</div>
+        <div class="brand-sub">生图开放接口文档</div>
+        <div class="brand-base">https://api.80ai.net</div>
+      </a>
+      <nav class="nav" aria-label="文档导航"><a class="nav-link" href="/docs-api/">概览</a><a class="nav-link" href="/docs-api/01-get-generation-models/"><span class="method get">GET</span><span>查询生图模型列表</span></a><a class="nav-link" href="/docs-api/02-get-task-scenes/"><span class="method get">GET</span><span>查询任务场景配置</span></a><a class="nav-link" href="/docs-api/03-create-task/"><span class="method post">POST</span><span>创建同步生图任务</span></a><a class="nav-link active" href="/docs-api/04-async-task/"><span class="method post">POST</span><span>异步生图任务</span></a></nav>
+    </aside>
+    <main class="content">
+      <header class="page-header">
+        <span class="page-method post">POST</span>
+        <h3 class="page-title">异步生图任务</h3>
+      </header>
+      <article class="doc"><h2 id="接口说明">接口说明</h2>
+<p>异步模式适合以下场景：</p>
+<ul>
+<li>调用方不希望长时间占用单个 HTTP 连接。</li>
+<li>需要自己控制轮询节奏、重试策略或超时策略。</li>
+<li>需要批量提交多个任务后统一查询状态。</li>
+</ul>
+<p>异步调用分为两步：</p>
+<p>1. 调用 <code>POST /api/tasks/submit</code> 提交任务，拿到 <code>task_id</code></p>
+<p>2. 调用 <code>GET /api/tasks/{task_id}</code> 或 <code>GET /api/tasks?task_ids=...</code> 轮询结果</p>
+<h2 id="第一步-提交任务">第一步：提交任务</h2>
+<h3 id="请求信息">请求信息</h3>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>内容</th></tr></thead><tbody><tr><td>URL</td><td><code>/api/tasks/submit</code></td></tr><tr><td>Method</td><td><code>POST</code></td></tr><tr><td>Content-Type</td><td><code>application/json</code></td></tr><tr><td>鉴权</td><td>需要 API Key</td></tr></tbody></table></div>
+<h3 id="header">Header</h3>
+<div class="table-wrap"><table><thead><tr><th>参数名</th><th>必填</th><th>示例</th><th>说明</th></tr></thead><tbody><tr><td><code>X-API-Key</code></td><td>是</td><td><code>sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></td><td>用户 API Key。</td></tr></tbody></table></div>
+<h3 id="body-参数">Body 参数</h3>
+<p><code>POST /api/tasks/submit</code> 的 Body 与同步接口 <code>POST /api/tasks</code> 完全一致，可直接复用同一套请求结构：</p>
+<div class="table-wrap"><table><thead><tr><th>参数名</th><th>类型</th><th>必填</th><th>默认值</th><th>说明</th></tr></thead><tbody><tr><td><code>mode</code></td><td>string</td><td>否</td><td><code>generate</code></td><td>任务模式。当前仅支持 <code>generate</code>。</td></tr><tr><td><code>model</code></td><td>string</td><td>是</td><td>-</td><td>场景标识，<strong>必填</strong>。须根据是否传入 <code>reference_images</code> 选择对应取值：<br><br><strong>文生图</strong>（未传 <code>reference_images</code> 或传空数组）：<table><thead><tr><th>model</th><th>对应官网模型</th></tr></thead><tbody><tr><td><code>gptimage25_flare_high</code></td><td>⚡️ Image 2.5 Flare</td></tr><tr><td><code>gptimage25_sunburst_high</code></td><td>⚡️ Image 2.5 Sunburst</td></tr><tr><td><code>gptimage2_high</code></td><td>⚡️ Image 2 (顶级)</td></tr><tr><td><code>gptimage2_medium</code></td><td>⚡️ Image 2 (高质量)</td></tr><tr><td><code>gptimage2_low</code></td><td>⚡️ Image 2 (性价比)</td></tr><tr><td><code>banana_pro</code></td><td>🍌 Nano Banana Pro</td></tr><tr><td><code>banana2</code></td><td>🍌 Nano Banana 2</td></tr><tr><td><code>banana2_lite</code></td><td>🍌 Nano Banana 2 Lite</td></tr><tr><td><code>banana</code></td><td>🍌 Nano Banana</td></tr></tbody></table><br><strong>图编辑</strong>（传入 <code>reference_images</code>）：<table><thead><tr><th>model</th><th>对应官网模型</th></tr></thead><tbody><tr><td><code>gptimage25_flare_high_edit</code></td><td>⚡️ Image 2.5 Flare</td></tr><tr><td><code>gptimage25_sunburst_high_edit</code></td><td>⚡️ Image 2.5 Sunburst</td></tr><tr><td><code>gptimage2_high_edit</code></td><td>⚡️ Image 2 (顶级)</td></tr><tr><td><code>gptimage2_medium_edit</code></td><td>⚡️ Image 2 (高质量)</td></tr><tr><td><code>gptimage2_low_edit</code></td><td>⚡️ Image 2 (性价比)</td></tr><tr><td><code>banana_pro_edit</code></td><td>🍌 Nano Banana Pro</td></tr><tr><td><code>banana2_edit</code></td><td>🍌 Nano Banana 2</td></tr><tr><td><code>banana2_edit_lite</code></td><td>🍌 Nano Banana 2 Lite</td></tr><tr><td><code>banana_edit</code></td><td>🍌 Nano Banana</td></tr></tbody></table></td></tr><tr><td><code>prompt</code></td><td>string</td><td>是</td><td>-</td><td>提示词，不能为空，最长 5000 字符。</td></tr><tr><td><code>size</code></td><td>string</td><td>否</td><td><code>3:4</code></td><td>图片宽高比，例如 <code>1:1</code>、<code>3:4</code>、<code>9:16</code>。可选值见 <code>GET /api/config/task-scenes</code> 的 <code>aspect_ratio_options</code>。</td></tr><tr><td><code>resolution</code></td><td>string</td><td>否</td><td><code>4K</code></td><td>清晰度档位，例如 <code>1K</code>、<code>2K</code>、<code>4K</code>。可选值见 <code>GET /api/config/task-scenes</code> 的 <code>image_size_options</code>。</td></tr><tr><td><code>reference_images</code></td><td>string[]</td><td>否</td><td><code>null</code></td><td>参考图数组，元素为 base64 字符串或 <code>data:image/...;base64,...</code> 形式。图编辑时必填。</td></tr></tbody></table></div>
+<h3 id="提交示例">提交示例</h3>
+<pre><code class="language-bash">curl --request POST \
+  --url &quot;https://api.80ai.net/api/tasks/submit&quot; \
+  --header &quot;Content-Type: application/json&quot; \
+  --header &quot;X-API-Key: sk-yourApiKey&quot; \
+  --data &#x27;{
+    &quot;mode&quot;: &quot;generate&quot;,
+    &quot;model&quot;: &quot;banana_pro&quot;,
+    &quot;prompt&quot;: &quot;一只穿宇航服的橘猫，站在月球表面，电影感光影，超清细节&quot;,
+    &quot;size&quot;: &quot;1:1&quot;,
+    &quot;resolution&quot;: &quot;2K&quot;
+  }&#x27;</code></pre>
+<h3 id="图编辑提交示例">图编辑提交示例</h3>
+<pre><code class="language-bash">curl --request POST \
+  --url &quot;https://api.80ai.net/api/tasks/submit&quot; \
+  --header &quot;Content-Type: application/json&quot; \
+  --header &quot;X-API-Key: sk-yourApiKey&quot; \
+  --data &#x27;{
+    &quot;mode&quot;: &quot;generate&quot;,
+    &quot;model&quot;: &quot;banana2_edit&quot;,
+    &quot;prompt&quot;: &quot;保持人物姿势不变，把背景换成海边日落&quot;,
+    &quot;size&quot;: &quot;3:4&quot;,
+    &quot;resolution&quot;: &quot;2K&quot;,
+    &quot;reference_images&quot;: [
+      &quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...&quot;
+    ]
+  }&#x27;</code></pre>
+<h3 id="提交成功响应">提交成功响应</h3>
+<pre><code class="language-json">{
+  &quot;task_id&quot;: &quot;biz_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,
+  &quot;task_ids&quot;: [
+    &quot;biz_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;
+  ]
+}</code></pre>
+<h3 id="提交响应字段">提交响应字段</h3>
+<div class="table-wrap"><table><thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead><tbody><tr><td><code>task_id</code></td><td>string \</td><td>null</td><td>首个任务 ID。当前 API 每次默认只创建 1 个任务，通常与 <code>task_ids[0]</code> 相同。</td></tr><tr><td><code>task_ids</code></td><td>string[]</td><td>本次提交产生的任务 ID 列表。</td></tr></tbody></table></div>
+<h2 id="第二步-查询单个任务">第二步：查询单个任务</h2>
+<h3 id="请求信息">请求信息</h3>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>内容</th></tr></thead><tbody><tr><td>URL</td><td><code>/api/tasks/{task_id}</code></td></tr><tr><td>Method</td><td><code>GET</code></td></tr><tr><td>鉴权</td><td>需要 API Key</td></tr></tbody></table></div>
+<h3 id="查询示例">查询示例</h3>
+<pre><code class="language-bash">curl --request GET \
+  --url &quot;https://api.80ai.net/api/tasks/biz_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot; \
+  --header &quot;X-API-Key: sk-yourApiKey&quot;</code></pre>
+<h3 id="任务进行中响应示例">任务进行中响应示例</h3>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;biz_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,
+  &quot;mode&quot;: &quot;generate&quot;,
+  &quot;model&quot;: &quot;banana_pro&quot;,
+  &quot;prompt&quot;: &quot;一只穿宇航服的橘猫，站在月球表面，电影感光影，超清细节&quot;,
+  &quot;size&quot;: &quot;1:1&quot;,
+  &quot;resolution&quot;: &quot;2K&quot;,
+  &quot;credit_cost&quot;: 10,
+  &quot;credit_refunded&quot;: false,
+  &quot;status&quot;: &quot;processing&quot;,
+  &quot;error_message&quot;: &quot;&quot;,
+  &quot;created_at&quot;: &quot;2026-05-27T14:30:00&quot;,
+  &quot;enqueued_at&quot;: &quot;2026-05-27T14:30:00&quot;,
+  &quot;request_started_at&quot;: null,
+  &quot;request_finished_at&quot;: null,
+  &quot;images&quot;: [
+    {
+      &quot;id&quot;: 123,
+      &quot;image_url&quot;: &quot;&quot;,
+      &quot;preview_url&quot;: &quot;&quot;,
+      &quot;thumb_url&quot;: &quot;&quot;,
+      &quot;status&quot;: &quot;pending&quot;,
+      &quot;error_message&quot;: &quot;&quot;,
+      &quot;image_format&quot;: &quot;&quot;,
+      &quot;image_size_bytes&quot;: 0
+    }
+  ]
+}</code></pre>
+<h3 id="任务完成响应示例">任务完成响应示例</h3>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;biz_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,
+  &quot;mode&quot;: &quot;generate&quot;,
+  &quot;model&quot;: &quot;banana_pro&quot;,
+  &quot;prompt&quot;: &quot;一只穿宇航服的橘猫，站在月球表面，电影感光影，超清细节&quot;,
+  &quot;size&quot;: &quot;1:1&quot;,
+  &quot;resolution&quot;: &quot;2K&quot;,
+  &quot;credit_cost&quot;: 10,
+  &quot;credit_refunded&quot;: false,
+  &quot;status&quot;: &quot;success&quot;,
+  &quot;error_message&quot;: &quot;&quot;,
+  &quot;created_at&quot;: &quot;2026-05-27T14:30:00&quot;,
+  &quot;enqueued_at&quot;: &quot;2026-05-27T14:30:00&quot;,
+  &quot;request_started_at&quot;: &quot;2026-05-27T14:30:02&quot;,
+  &quot;request_finished_at&quot;: &quot;2026-05-27T14:30:18&quot;,
+  &quot;images&quot;: [
+    {
+      &quot;id&quot;: 123,
+      &quot;image_url&quot;: &quot;https://cdn.example.com/generated/xxx.png&quot;,
+      &quot;preview_url&quot;: &quot;&quot;,
+      &quot;thumb_url&quot;: &quot;https://cdn.example.com/generated/xxx.png&quot;,
+      &quot;status&quot;: &quot;success&quot;,
+      &quot;error_message&quot;: &quot;&quot;,
+      &quot;image_format&quot;: &quot;png&quot;,
+      &quot;image_size_bytes&quot;: 2048000
+    }
+  ]
+}</code></pre>
+<h2 id="第三步-批量查询多个任务">第三步：批量查询多个任务</h2>
+<h3 id="请求信息">请求信息</h3>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>内容</th></tr></thead><tbody><tr><td>URL</td><td><code>/api/tasks?task_ids=taskA&amp;task_ids=taskB</code></td></tr><tr><td>Method</td><td><code>GET</code></td></tr><tr><td>鉴权</td><td>需要 API Key</td></tr></tbody></table></div>
+<h3 id="查询示例">查询示例</h3>
+<pre><code class="language-bash">curl --request GET \
+  --url &quot;https://api.80ai.net/api/tasks?task_ids=biz_taskA&amp;task_ids=biz_taskB&quot; \
+  --header &quot;X-API-Key: sk-yourApiKey&quot;</code></pre>
+<p>批量查询返回 <code>TaskOut[]</code>，单个元素结构与同步接口 <code>POST /api/tasks</code> 成功响应中的任务对象一致。</p>
+<h2 id="异步状态说明">异步状态说明</h2>
+<div class="table-wrap"><table><thead><tr><th>状态</th><th>说明</th></tr></thead><tbody><tr><td><code>pending</code></td><td>任务已创建，等待进入队列。</td></tr><tr><td><code>queued</code></td><td>任务已入队，等待 worker 处理。</td></tr><tr><td><code>processing</code></td><td>worker 正在处理任务。</td></tr><tr><td><code>success</code></td><td>任务处理成功，可读取 <code>images[].image_url</code>。</td></tr><tr><td><code>failed</code></td><td>任务处理失败，可查看 <code>error_message</code> 和 <code>images[].error_message</code>。</td></tr></tbody></table></div>
+<p>建议轮询间隔为 2 到 5 秒；当任务进入 <code>success</code> 或 <code>failed</code> 后即可停止轮询。</p>
+<h2 id="错误示例">错误示例</h2>
+<pre><code class="language-json">{
+  &quot;detail&quot;: &quot;积分不足，需要 10 积分，当前余额 5&quot;
+}</code></pre>
+<pre><code class="language-json">{
+  &quot;detail&quot;: &quot;model 不能为空&quot;
+}</code></pre>
+<pre><code class="language-json">{
+  &quot;detail&quot;: &quot;图编辑须传入 reference_images&quot;
+}</code></pre>
+<pre><code class="language-json">{
+  &quot;detail&quot;: &quot;reference_images[0] 必须是图片 base64&quot;
+}</code></pre>
+<pre><code class="language-json">{
+  &quot;detail&quot;: &quot;任务队列暂不可用，请稍后重试&quot;
+}</code></pre>
+<h2 id="注意事项">注意事项</h2>
+<ul>
+<li><code>POST /api/tasks/submit</code> 默认创建 1 个任务，返回的 <code>task_id</code> 可用于后续查询。</li>
+<li>图编辑与文生图共用同一组 Body 参数；须根据是否传入 <code>reference_images</code> 选择对应的 <code>model</code> 取值。</li>
+<li>异步模式下，图编辑请求中的 <code>reference_images</code> 可以继续直接传 base64 或 data URL；服务端会自动转为可供 worker 读取的持久化引用。</li>
+<li><code>size</code>、<code>resolution</code> 是否生效取决于所选 <code>model</code>，可先调用 <code>GET /api/config/task-scenes</code> 查看场景配置。</li>
+</ul></article>
+      <footer class="footer">80AI API</footer>
+    </main>
+  </div>
+  <script>document.querySelectorAll('.doc h2, .doc h3').forEach((heading) => {
+  if (heading.id) return;
+  const text = heading.textContent || '';
+  const id = text.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fff-]/g, '');
+  if (id) heading.id = id;
+});
+</script>
+</body>
+</html>

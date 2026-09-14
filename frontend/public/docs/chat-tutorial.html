@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 对话教程</title>
+  <script src="./tutorial-theme.js"></script>
+  <link rel="stylesheet" href="./tutorial-doc.css" />
+</head>
+<body>
+  <article class="doc">
+    <header class="doc-hero">
+      <h1>AI 对话</h1>
+      <p>按步骤了解如何进入对话页、选择场景、发送文字和图片，以及把对话结果带到生图页。</p>
+    </header>
+
+    <section id="overview">
+      <h2>1. 进入页面与布局</h2>
+      <p>登录后，在左侧导航中点击「AI 对话」，即可进入完整对话页。助手名称是「小八」。未登录时，部分操作会先弹出登录框。</p>
+      <figure>
+        <img loading="eager" fetchpriority="high" decoding="async" src="./tutorial/chat-01-entry.png" alt="从导航进入 AI 对话" />
+        <figcaption>图 1：从导航进入 AI 对话</figcaption>
+      </figure>
+      <p>对话页分成三块：</p>
+      <ul>
+        <li><strong>左侧会话栏</strong>：新建对话、搜索历史，并切换已有会话。</li>
+        <li><strong>中间消息区</strong>：查看问候语、快捷提问和来回消息。</li>
+        <li><strong>底部输入区</strong>：写内容、选场景、添加图片，然后发送。</li>
+      </ul>
+      <figure>
+        <img loading="eager" decoding="async" src="./tutorial/chat-02-layout.png" alt="AI 对话页面布局" />
+        <figcaption>图 2：左侧会话、中间消息和底部输入区</figcaption>
+      </figure>
+      <p>在 AI 生图页右侧，也可以点「AI助手」打开同一套对话。需要更完整的记录时，再点「在对话页打开」。</p>
+      <div class="tip">对话页适合连续多轮沟通；生图页的侧边助手适合边写提示词边改。两边的会话是同一套记录。</div>
+    </section>
+
+    <section id="sessions">
+      <h2>2. 新建与管理对话</h2>
+      <p>每个会话都是一段独立记录。换主题时建议新建，避免不同问题混在一起。</p>
+      <ol>
+        <li>点左上角「新建对话」，会立刻进入空白会话。</li>
+        <li>点放大镜可以按标题搜索历史对话。</li>
+        <li>在列表里点一条记录，就能继续之前的对话。</li>
+        <li>会话右侧的删除图标可以删掉整段记录。删除前会再确认一次。</li>
+      </ol>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/chat-03-sessions.png" alt="新建、搜索和历史对话" />
+        <figcaption>图 3：新建对话，或从历史记录继续聊</figcaption>
+      </figure>
+      <p>会话栏左上角的折叠按钮可以收起列表，把空间留给消息。需要对照历史时再展开即可。</p>
+      <div class="tip">新会话的标题会按你发出的第一句话自动生成。之后也可以从列表里一眼认出主题。</div>
+    </section>
+
+    <section id="scenes">
+      <h2>3. 选择对话场景</h2>
+      <p>底部输入区左侧可以切换对话场景。不同场景对应不同能力和积分消耗。</p>
+      <ol>
+        <li>点击场景名称，打开场景列表。</li>
+        <li>查看每个场景的说明和积分。有的场景免费，有的会按次扣积分。</li>
+        <li>选好后再发送。当前会话会记住这次选择。</li>
+      </ol>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/chat-04-scenes.png" alt="选择对话场景" />
+        <figcaption>图 4：按说明和积分选择对话场景</figcaption>
+      </figure>
+      <p>发送按钮上也会显示本次预计积分。积分不足时，按页面提示购买或兑换即可。</p>
+      <div class="tip">不确定用哪个时，先看场景说明。写提示词、改图建议和普通问答，通常对应不同场景。</div>
+    </section>
+
+    <section id="send">
+      <h2>4. 发送文字消息</h2>
+      <p>在底部输入框写下问题或任务，就可以开始对话。助手回复会按字显示出来。</p>
+      <ol>
+        <li>在输入框里写内容。例如提问、改文案、优化提示词。</li>
+        <li>按 <strong>Enter</strong> 发送；<strong>Shift + Enter</strong> 换行。</li>
+        <li>也可以直接点右侧「发送」。</li>
+        <li>发送后如果还没出完，可以点「中断」停止本次回复。</li>
+      </ol>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/chat-05-send.png" alt="输入内容并发送" />
+        <figcaption>图 5：输入内容后发送，发送中可中断</figcaption>
+      </figure>
+      <p>消息区会显示「正在思考...」，随后出现助手回复。如果滑到了上面，右下角会出现回到底部的按钮。</p>
+      <div class="tip">同一会话可以连续追问。换了一个完全不同的主题，建议新建对话，上下文会更干净。</div>
+    </section>
+
+    <section id="images">
+      <h2>5. 发送图片</h2>
+      <p>需要助手看图、描述图片或按图改提示词时，把图片一起发给它。</p>
+      <ul>
+        <li>点输入区的图片按钮，从本地选择。</li>
+        <li>直接把图片拖进输入区。</li>
+        <li>也可以从剪贴板粘贴图片。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/chat-06-images.png" alt="在对话里添加图片" />
+        <figcaption>图 6：上传、拖入或粘贴图片后再发送</figcaption>
+      </figure>
+      <p>一次最多添加 4 张。上传完成后，输入区上方会显示缩略图，点叉可以移除。支持 JPEG、PNG、WebP 和 GIF。</p>
+      <div class="tip">只发图片也可以。例如先丢一张产品图，再补一句「描述这张图，并反推可用提示词」。</div>
+    </section>
+
+    <section id="starters">
+      <h2>6. 快捷提问</h2>
+      <p>空白会话里会看到问候语和「试试这样问」。这些入口由当前场景配置，点一下就会直接发出。</p>
+      <ul>
+        <li>带标签的问题适合快速了解能力，例如提问、无限画布、理解图片。</li>
+        <li>带缩略图的条目会连同示例图一起发送，适合看图说话或改图。</li>
+        <li>点卡片就会按当前场景发出，不必自己再抄一遍。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/chat-07-starters.png" alt="空白会话里的快捷提问" />
+        <figcaption>图 7：用快捷提问快速开始</figcaption>
+      </figure>
+      <div class="tip">快捷提问会真实发出一条消息，并按当前场景扣积分。只是想看看文案时，先不要点。</div>
+    </section>
+
+    <section id="replies">
+      <h2>7. 处理回复</h2>
+      <p>助手回复出来后，可以直接复制、重试，或继续追问。</p>
+      <ul>
+        <li><strong>复制</strong>：复制自己或助手的文字，方便贴到别处。</li>
+        <li><strong>重试</strong>：回复失败或效果不好时，按上一条内容再问一次。</li>
+        <li><strong>加载更早消息</strong>：会话很长时，顶部可以继续往上翻。</li>
+        <li><strong>预览图片</strong>：消息里的图可以点开看大图。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/chat-08-actions.png" alt="复制和重试回复" />
+        <figcaption>图 8：复制回复，或在失败后重试</figcaption>
+      </figure>
+      <p>如果助手回复中断或系统出错，气泡里会提示「系统出错，可进行重试」。点重试即可，不必重新组织整段问题。</p>
+      <div class="tip">代码块或提示词卡片右上角也可以单独复制。适合出图的内容，还可以直接「复制并去生图」。</div>
+    </section>
+
+    <section id="generate">
+      <h2>8. 从对话去生图</h2>
+      <p>小八不只是聊天。对话里出现适合出图的描述时，可以直接带到生图页，或在对话里确认生成。</p>
+      <ul>
+        <li><strong>复制并去生图</strong>：出现在提示词或代码块旁。点击后会复制内容，并跳到 AI 生图页回填提示词。</li>
+        <li><strong>生图确认卡片</strong>：助手也可能直接给出一张确认卡。你可以改模型、张数、比例，看预计积分后再点「确认生图」。</li>
+        <li>卡片上如果带了参考图，会按图编辑处理；没有参考图则按文生图处理。</li>
+        <li>不想生成时点「取消」。失败后也可以在卡片上重试。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/chat-09-generate.png" alt="对话里的生图确认或去生图" />
+        <figcaption>图 9：在对话里确认生图，或把提示词带到生图页</figcaption>
+      </figure>
+      <div class="tip">对话里确认的生图，和 AI 生图页使用同一套积分与任务。结果可以继续在生图页下载、再编辑。</div>
+    </section>
+
+    <section id="assistant">
+      <h2>9. 生图页的 AI 助手</h2>
+      <p>在 AI 生图页右侧可以看到「AI助手」。登录后点开，就能边聊边改提示词，不必离开当前创作页。</p>
+      <ul>
+        <li>侧边栏里的对话和完整对话页是同一套会话。</li>
+        <li>出现合适的提示词时，点「复制并去生图」，内容会回到当前生图页。</li>
+        <li>需要对照更长的历史，或一次看更多消息时，点「在对话页打开」。</li>
+        <li>按 Esc，或点关闭，即可收起助手。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/chat-10-assistant.png" alt="生图页右侧的 AI 助手" />
+        <figcaption>图 10：在生图页打开 AI 助手，边聊边回填提示词</figcaption>
+      </figure>
+      <div class="tip">侧边助手打开时，会收起教程侧栏，避免两块面板叠在一起。需要看教程时，关掉助手即可。</div>
+    </section>
+
+    <section id="tips">
+      <h2>10. 使用建议</h2>
+      <ul>
+        <li>先选对场景，再开始提问。写提示词、看图和普通问答，效果会更稳。</li>
+        <li>一个主题用一个会话。列表会按第一句话生成标题，之后更好找。</li>
+        <li>改图或反推提示词时，把图和文字一起发，比只写描述更准。</li>
+        <li>准备出图时，优先用「复制并去生图」或确认卡片，少一次来回粘贴。</li>
+        <li>只是想快速改一句提示词，用生图页右侧的 AI 助手就够了。</li>
+        <li>积分消耗以发送按钮和场景说明为准。不确定时先看预计积分。</li>
+      </ul>
+      <figure>
+        <img loading="lazy" decoding="async" src="./tutorial/chat-11-tips.png" alt="从对话回到生图页继续创作" />
+        <figcaption>图 11：把对话结果带回生图页，继续生成</figcaption>
+      </figure>
+    </section>
+  </article>
+  <script src="./tutorial-doc.js"></script>
+</body>
+</html>
