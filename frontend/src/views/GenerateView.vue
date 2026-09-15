@@ -9,6 +9,7 @@ import {
   CHAT_GENERATE_TASKS_CREATED_EVENT,
   type ChatGenerateTasksPayload,
 } from "@/lib/chatGenerateDraft";
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import { saveImageToVideoDraft } from "@/lib/videoGenerateDraft";
 import {
   FontSizeOutlined,
@@ -6172,7 +6173,7 @@ watch(() => auth.isLoggedIn, async (isLoggedIn) => {
                         <template #icon><PictureOutlined /></template>
                       </a-button>
                     </a-tooltip>
-                    <a-tooltip v-if="item.taskId" title="反馈">
+                    <a-tooltip v-if="SHOW_USER_FEEDBACK_ENTRY && item.taskId" title="反馈">
                       <button
                         type="button"
                         class="result-more-trigger icon-chip"

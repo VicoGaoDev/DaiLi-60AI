@@ -40,6 +40,7 @@ import {
   isTutorialDockTabEnabled,
   subscribeTutorialDockTabEnabled,
 } from "@/lib/generateTutorialDock";
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import { APP_THEME_ATTRIBUTE, appThemes, getAppThemeGroups, isAppThemeName, type AppThemeName } from "@/config/theme";
 import { importAfterExtendedAntd } from "@/lib/antd";
 import { getCurrentTheme, setAppTheme } from "@/lib/theme";
@@ -102,7 +103,8 @@ const isAdminRoute = computed(() => route.path.startsWith("/admin"));
 const shouldSyncUserNoticeCounts = computed(() => !isCanvasRoute.value && !isAdminRoute.value);
 const showDesktopSideNav = computed(() => !hideTopMenu.value || (isWorkbenchLayout.value && isCanvasRoute.value));
 const showSuggestionFab = computed(() =>
-  !hideTopMenu.value
+  SHOW_USER_FEEDBACK_ENTRY
+  && !hideTopMenu.value
   && !isWorkbenchLayout.value
   && !isAdminRoute.value,
 );
@@ -557,14 +559,16 @@ const adminMenuConfigItems = computed(() =>
 const hasAdminUnresolvedFeedback = computed(() => adminUnresolvedFeedbackCount.value > 0);
 const hasUserUnreadFeedback = computed(() => userCompletedUnreadFeedbackCount.value > 0);
 const hasUserUnreadSystemMessage = computed(() => userUnreadSystemMessageCount.value > 0);
-const hasUserUnreadNotice = computed(() => hasUserUnreadFeedback.value || hasUserUnreadSystemMessage.value);
+const hasUserUnreadNotice = computed(() =>
+  (SHOW_USER_FEEDBACK_ENTRY && hasUserUnreadFeedback.value) || hasUserUnreadSystemMessage.value
+);
 
 const userMenuItems = computed(() => [
   { key: "profile", label: "个人主页", icon: UserOutlined, danger: false },
   { key: "credits", label: "积分明细", icon: ThunderboltOutlined, danger: false },
   ...(canManagePromoCodes.value ? [{ key: "promo-codes", label: "我的推广码", icon: UsergroupAddOutlined, danger: false }] : []),
   { key: "api-keys", label: "API 调用", icon: KeyOutlined, danger: false },
-  { key: "my-feedback", label: "我的反馈", icon: MessageOutlined, danger: false },
+  ...(SHOW_USER_FEEDBACK_ENTRY ? [{ key: "my-feedback", label: "我的反馈", icon: MessageOutlined, danger: false }] : []),
   { key: "system-messages", label: "系统消息", icon: MailOutlined, danger: false },
   { key: "update-logs", label: "更新日志", icon: BellOutlined, danger: false },
   { key: "contact", label: "联系我们", icon: CustomerServiceOutlined, danger: false },
@@ -848,6 +852,7 @@ async function syncAdminUnresolvedFeedbackCount(options?: { showToast?: boolean 
 }
 
 async function syncUserCompletedUnreadFeedbackCount(options?: { showToast?: boolean; forceToast?: boolean }) {
+  if (!SHOW_USER_FEEDBACK_ENTRY) return;
   if (!auth.isLoggedIn) return;
   if (!shouldSyncUserNoticeCounts.value) return;
   try {
@@ -2667,7 +2672,7 @@ watch(
       <template #title>
         <div class="credits-purchase-title">
           <span>积分套餐</span>
-          <button type="button" class="credits-purchase-title-feedback" @click="openPurchaseFeedbackDialog">
+          <button v-if="SHOW_USER_FEEDBACK_ENTRY" type="button" class="credits-purchase-title-feedback" @click="openPurchaseFeedbackDialog">
             遇到问题？
           </button>
         </div>

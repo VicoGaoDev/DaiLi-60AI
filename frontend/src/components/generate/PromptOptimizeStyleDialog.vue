@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 import { message } from "ant-design-vue";
 import { CheckCircleOutlined, ReloadOutlined, ThunderboltOutlined } from "@ant-design/icons-vue";
 
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import { getPromptOptimizeStyles } from "@/api/config";
 import UserSuggestionDialog from "@/components/feedback/UserSuggestionDialog.vue";
 import type { PublicPromptOptimizeStyle } from "@/types";
@@ -126,7 +127,7 @@ function openSuggestionDialog() {
 
     <template #footer>
       <div class="style-dialog-footer">
-        <a-button class="style-add-request-btn" @click="openSuggestionDialog">
+        <a-button v-if="SHOW_USER_FEEDBACK_ENTRY" class="style-add-request-btn" @click="openSuggestionDialog">
           我要加风格
         </a-button>
         <div class="style-dialog-footer-actions">

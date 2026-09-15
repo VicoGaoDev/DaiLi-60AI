@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import dayjs from "dayjs";
 import { BellOutlined } from "@ant-design/icons-vue";
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import { getMyUnreadFeedbackCount } from "@/api/feedback";
 import { getMyUnreadSystemMessageCount } from "@/api/systemMessages";
 import { listUpdateLogs } from "@/api/updateLogs";
@@ -20,9 +21,17 @@ async function loadHighlightState() {
   try {
     const tasks: Promise<any>[] = [listUpdateLogs(1, 1)];
     if (auth.isLoggedIn) {
-      tasks.push(getMyUnreadFeedbackCount(), getMyUnreadSystemMessageCount());
+      if (SHOW_USER_FEEDBACK_ENTRY) {
+        tasks.push(getMyUnreadFeedbackCount());
+      }
+      tasks.push(getMyUnreadSystemMessageCount());
     }
-    const [updateLogRes, feedbackUnreadRes, systemUnreadRes] = await Promise.all(tasks);
+    const results = await Promise.all(tasks);
+    const updateLogRes = results[0];
+    const feedbackUnreadRes = SHOW_USER_FEEDBACK_ENTRY && auth.isLoggedIn ? results[1] : { count: 0 };
+    const systemUnreadRes = auth.isLoggedIn
+      ? results[SHOW_USER_FEEDBACK_ENTRY ? 2 : 1]
+      : { count: 0 };
     const latest = updateLogRes.items[0];
     const cutoff = dayjs().subtract(7, "day");
     const hasRecentUpdate = !!latest?.effective_at

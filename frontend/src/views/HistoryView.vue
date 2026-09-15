@@ -32,6 +32,7 @@ import {
 } from "@/api/images";
 import { createTemplateFromTaskImage, listTemplateTags, type TemplatePayload } from "@/api/templates";
 import { deletePromptHistory, deletePromptOptimizeTask } from "@/api/auth";
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import FeedbackDialog from "@/components/feedback/FeedbackDialog.vue";
 import AdminUserInfoDialog from "@/components/admin/AdminUserInfoDialog.vue";
 import HistoryDetailDialog from "@/components/history/HistoryDetailDialog.vue";
@@ -1457,7 +1458,7 @@ function handleEditImage(item: UserHistoryCard) {
               class="history-overlay-actions history-overlay-actions-top"
               :class="{ 'history-overlay-actions-with-persistent-pin': canPinHistoryItem(item) && item.is_pinned }"
             >
-              <a-tooltip v-if="!isAdminHistoryView && item.task_id" title="反馈">
+              <a-tooltip v-if="SHOW_USER_FEEDBACK_ENTRY && !isAdminHistoryView && item.task_id" title="反馈">
                 <a-button
                   shape="circle"
                   type="text"

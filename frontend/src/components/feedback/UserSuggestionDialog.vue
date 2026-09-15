@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import { createFeedback } from "@/api/feedback";
 import {
   isImageUploadTooLarge,
@@ -173,7 +174,7 @@ async function handleSubmit() {
     <template #title>
       <div class="suggestion-title-row">
         <span>提交建议</span>
-        <button type="button" class="suggestion-title-link" @click.stop="goMyFeedbacks">
+        <button v-if="SHOW_USER_FEEDBACK_ENTRY" type="button" class="suggestion-title-link" @click.stop="goMyFeedbacks">
           我的反馈
         </button>
       </div>

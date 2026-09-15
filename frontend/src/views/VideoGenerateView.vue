@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { message, Modal } from "ant-design-vue";
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import { consumeVideoGenerateDraft } from "@/lib/videoGenerateDraft";
 import {
   CloseOutlined,
@@ -1718,7 +1719,7 @@ onBeforeUnmount(() => {
                               <span>下载原视频</span>
                             </span>
                           </a-menu-item>
-                          <a-menu-item @click="openFeedbackDialog(task)">
+                          <a-menu-item v-if="SHOW_USER_FEEDBACK_ENTRY" @click="openFeedbackDialog(task)">
                             <span class="video-task-menu-item">
                               <MessageOutlined />
                               <span>反馈</span>

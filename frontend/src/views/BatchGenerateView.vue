@@ -28,6 +28,7 @@ import {
 import AspectRatioPicker from "@/components/generate/AspectRatioPicker.vue";
 import ModelCategorySelect from "@/components/generate/ModelCategorySelect.vue";
 import OptionGridPicker from "@/components/generate/OptionGridPicker.vue";
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import FeedbackDialog from "@/components/feedback/FeedbackDialog.vue";
 import HistoryDetailDialog from "@/components/history/HistoryDetailDialog.vue";
 import {
@@ -3209,7 +3210,7 @@ onBeforeUnmount(() => {
                       <img :src="getDisplayImageUrl(image)" alt="生图结果" class="result-image" />
                       <div class="result-hover-actions result-hover-actions-top">
                         <a-button
-                          v-if="canFeedbackBatchSlot(card, imageIndex)"
+                          v-if="SHOW_USER_FEEDBACK_ENTRY && canFeedbackBatchSlot(card, imageIndex)"
                           shape="circle"
                           class="result-hover-action"
                           @click.stop="openFeedbackDialogForBatchCard(card, imageIndex)"
@@ -3252,7 +3253,7 @@ onBeforeUnmount(() => {
                       <img :src="failedResultAsset" alt="生成失败" class="failed-image" />
                       <div class="result-hover-actions result-hover-actions-top">
                         <a-button
-                          v-if="canFeedbackBatchSlot(card, imageIndex)"
+                          v-if="SHOW_USER_FEEDBACK_ENTRY && canFeedbackBatchSlot(card, imageIndex)"
                           shape="circle"
                           class="result-hover-action"
                           @click.stop="openFeedbackDialogForBatchCard(card, imageIndex)"

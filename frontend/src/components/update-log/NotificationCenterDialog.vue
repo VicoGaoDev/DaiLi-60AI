@@ -2,6 +2,7 @@
 import { computed, ref, watch } from "vue";
 import dayjs from "dayjs";
 import { MessageOutlined, MailOutlined, BellOutlined } from "@ant-design/icons-vue";
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import { message } from "ant-design-vue";
 import { useRouter } from "vue-router";
 import {
@@ -34,7 +35,12 @@ const emit = defineEmits<{
 
 const auth = useAuthStore();
 const router = useRouter();
-const activeTab = ref<NotificationTabKey>(props.defaultTab || "update-logs");
+function resolveDefaultTab(tab?: NotificationTabKey): NotificationTabKey {
+  if (tab === "feedback" && !SHOW_USER_FEEDBACK_ENTRY) return "update-logs";
+  return tab || "update-logs";
+}
+
+const activeTab = ref<NotificationTabKey>(resolveDefaultTab(props.defaultTab));
 
 const feedbackLoading = ref(false);
 const feedbackItems = ref<FeedbackItem[]>([]);
@@ -62,7 +68,7 @@ const updateLogPageSize = ref(10);
 const hasRecentUpdateLog = ref(false);
 
 const tabItems = [
-  { key: "feedback" as const, label: "我的反馈", icon: MessageOutlined },
+  ...(SHOW_USER_FEEDBACK_ENTRY ? [{ key: "feedback" as const, label: "我的反馈", icon: MessageOutlined }] : []),
   { key: "system-messages" as const, label: "系统消息", icon: MailOutlined },
   { key: "update-logs" as const, label: "更新日志", icon: BellOutlined },
 ];
@@ -146,7 +152,7 @@ async function loadUnreadCounts() {
   }
   try {
     const [feedbackRes, systemRes] = await Promise.all([
-      getMyUnreadFeedbackCount(),
+      SHOW_USER_FEEDBACK_ENTRY ? getMyUnreadFeedbackCount() : Promise.resolve({ count: 0 }),
       getMyUnreadSystemMessageCount(),
     ]);
     feedbackUnreadCount.value = Number(feedbackRes.count || 0);
@@ -314,7 +320,7 @@ watch(
   () => props.open,
   (value) => {
     if (value) {
-      activeTab.value = props.defaultTab || "update-logs";
+      activeTab.value = resolveDefaultTab(props.defaultTab);
       void loadRecentUpdateLogState();
       void loadUnreadCounts();
       loadActiveTab();

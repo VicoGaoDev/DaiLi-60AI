@@ -40,6 +40,7 @@ import {
 } from "@/api/upload";
 import UserAssetPicker from "@/components/assets/UserAssetPicker.vue";
 import ModelCategorySelect from "@/components/generate/ModelCategorySelect.vue";
+import { SHOW_USER_FEEDBACK_ENTRY } from "@/config/features";
 import FeedbackDialog from "@/components/feedback/FeedbackDialog.vue";
 import AdminUserInfoDialog from "@/components/admin/AdminUserInfoDialog.vue";
 import HistoryDetailDialog from "@/components/history/HistoryDetailDialog.vue";
@@ -4987,7 +4988,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="canvas-workbench-actions" @pointerdown.stop @click.stop>
-        <button type="button" class="canvas-feedback-btn" @click="openCanvasFeedback">
+        <button v-if="SHOW_USER_FEEDBACK_ENTRY" type="button" class="canvas-feedback-btn" @click="openCanvasFeedback">
           反馈
         </button>
         <button type="button" class="canvas-brand-link" title="返回画布列表" @click="goCanvasList">
@@ -5368,7 +5369,7 @@ onBeforeUnmount(() => {
             <InfoCircleOutlined />
             <span>详细信息</span>
           </button>
-          <button type="button" @click="openNodeFeedback(selectedNode)">
+          <button v-if="SHOW_USER_FEEDBACK_ENTRY" type="button" @click="openNodeFeedback(selectedNode)">
             <MessageOutlined />
             <span>反馈</span>
           </button>
