@@ -96,6 +96,7 @@ const UserSuggestionDialog = defineAsyncComponent(() => importAfterExtendedAntd(
 const NotificationCenterDialog = defineAsyncComponent(() => importAfterExtendedAntd(() => import("@/components/update-log/NotificationCenterDialog.vue")));
 const isAdmin = computed(() => auth.isAdmin);
 const isSuperAdmin = computed(() => auth.isSuperAdmin);
+const isAgent = computed(() => auth.isAgent);
 const hideTopMenu = computed(() => route.meta.hideTopMenu === true);
 const isWorkbenchLayout = computed(() => route.meta.workbenchLayout === true);
 const isCanvasRoute = computed(() => route.path.startsWith("/canvas") || route.path.startsWith("/admin/user-canvases/"));
@@ -268,6 +269,9 @@ const routeOrder = new Map<string, number>([
   ["/promo-codes", 14],
   ["/feedbacks", 15],
   ["/feedbacks/:feedbackId", 16],
+  ["/agentor", 16.2],
+  ["/agentor/redeem-keys", 16.3],
+  ["/agentor/credit-logs", 16.4],
   ["/admin/templates", 17],
   ["/admin/prompt-optimize", 17.5],
   ["/admin/example-canvases", 18],
@@ -566,6 +570,7 @@ const hasUserUnreadNotice = computed(() =>
 const userMenuItems = computed(() => [
   { key: "profile", label: "个人主页", icon: UserOutlined, danger: false },
   { key: "credits", label: "积分明细", icon: ThunderboltOutlined, danger: false },
+  ...(isAgent.value ? [{ key: "agent", label: "代理后台", icon: SettingOutlined, danger: false }] : []),
   ...(canManagePromoCodes.value ? [{ key: "promo-codes", label: "我的推广码", icon: UsergroupAddOutlined, danger: false }] : []),
   { key: "api-keys", label: "API 调用", icon: KeyOutlined, danger: false },
   ...(SHOW_USER_FEEDBACK_ENTRY ? [{ key: "my-feedback", label: "我的反馈", icon: MessageOutlined, danger: false }] : []),
@@ -576,7 +581,7 @@ const userMenuItems = computed(() => [
   { key: "logout", label: "退出登录", icon: LogoutOutlined, danger: true },
 ]);
 const userMenuAccountItems = computed(() =>
-  userMenuItems.value.filter((item) => ["profile", "credits", "promo-codes", "api-keys"].includes(item.key))
+  userMenuItems.value.filter((item) => ["profile", "credits", "agent", "promo-codes", "api-keys"].includes(item.key))
 );
 const userMenuSettingsItems = computed(() =>
   userMenuItems.value.filter((item) => ["contact"].includes(item.key))
@@ -614,6 +619,7 @@ const selectedKeys = computed(() => {
   if (p === "/templates") return ["more", "templates"];
   if (p.startsWith("/tutorial")) return ["more", "tutorial"];
   if (p === "/video-generate") return ["video-generate"];
+  if (p.startsWith("/agentor") || p.startsWith("/agent")) return ["agent"];
   if (p.startsWith("/chat")) return ["chat"];
   if (p.startsWith("/canvas")) return ["canvas"];
   if (p === "/batch-generate") return ["batch-generate"];
@@ -723,6 +729,9 @@ function handleMenuClick({ key }: { key: string }) {
     }
     router.push("/canvas");
   }
+  else if (key === "agent") {
+    router.push("/agentor");
+  }
   else if (key === "history") {
     if (!auth.isLoggedIn) {
       openAuthModal("login");
@@ -814,6 +823,7 @@ function handleUserMenu({ key }: { key: string }) {
   else if (key === "contact") openCreditsContact();
   else if (key === "settings") router.push("/settings");
   else if (key === "credits") router.push("/credit-logs");
+  else if (key === "agent") router.push("/agentor");
   else if (key === "promo-codes") router.push("/promo-codes");
   else if (key === "api-keys") router.push("/api-keys");
   else if (key === "logout") {
@@ -2072,6 +2082,16 @@ watch(
           <GiftOutlined />
           <span>兑换积分</span>
         </button>
+        <button
+          v-if="auth.isLoggedIn && isAgent"
+          type="button"
+          class="canvas-side-nav-item canvas-side-nav-action"
+          :class="{ active: selectedKeys.includes('agent') }"
+          @click="handleMenuClick({ key: 'agent' })"
+        >
+          <SettingOutlined />
+          <span>代理后台</span>
+        </button>
         <button v-if="SHOW_INVITE_REWARDS_ENTRY" type="button" class="canvas-side-nav-item canvas-side-nav-action" @click="openInviteRewardsEntry">
           <ShareAltOutlined />
           <span>邀请奖励</span>
@@ -2400,6 +2420,10 @@ watch(
             <a-button block class="mobile-drawer-action-btn" @click="openRedeemEntry">
               <template #icon><GiftOutlined /></template>
               兑换积分
+            </a-button>
+            <a-button v-if="auth.isLoggedIn && isAgent" block class="mobile-drawer-action-btn" @click="handleMenuClick({ key: 'agent' })">
+              <template #icon><SettingOutlined /></template>
+              代理后台
             </a-button>
             <a-button v-if="SHOW_INVITE_REWARDS_ENTRY" block class="mobile-drawer-action-btn" @click="openInviteRewardsEntry">
               <template #icon><ShareAltOutlined /></template>

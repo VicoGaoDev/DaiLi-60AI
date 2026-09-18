@@ -10,6 +10,7 @@ class CreditLog(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     amount = Column(Integer, nullable=False)
     type = Column(String(20), nullable=False)  # "allocate" | "consume"
+    credit_type = Column(Integer, nullable=False, default=0, server_default="0", index=True)
     description = Column(String(500), default="")
     operator_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)

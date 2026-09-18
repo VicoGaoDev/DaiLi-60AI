@@ -5,6 +5,7 @@ declare module "vue-router" {
     requiresAuth?: boolean;
     requiresAdmin?: boolean;
     requiresSuperAdmin?: boolean;
+    requiresAgent?: boolean;
     hideTopMenu?: boolean;
     workbenchLayout?: boolean;
     deferHeavyPage?: boolean;

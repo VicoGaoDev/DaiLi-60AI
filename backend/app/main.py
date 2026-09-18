@@ -997,6 +997,33 @@ def _ensure_user_credit_schema():
                     """
                 )
             )
+        conn.execute(
+            text(
+                """
+                INSERT INTO user_credits (user_id, type, remain_credit, used_credit, status, expire_time, created_at, updated_at)
+                SELECT users.id, 1, 0, 0, 1, '2027-12-30 23:59:59', NOW(), NOW()
+                FROM users
+                LEFT JOIN user_credits
+                  ON user_credits.user_id = users.id
+                 AND user_credits.type = 1
+                WHERE users.role = 'agent'
+                  AND user_credits.id IS NULL
+                """
+            )
+        )
+    if "credit_logs" in table_names:
+        credit_log_columns = {col["name"] for col in inspect(engine).get_columns("credit_logs")}
+        with engine.begin() as conn:
+            if "credit_type" not in credit_log_columns:
+                conn.execute(
+                    text(
+                        """
+                        ALTER TABLE credit_logs
+                        ADD COLUMN credit_type INTEGER NOT NULL DEFAULT 0
+                        AFTER type
+                        """
+                    )
+                )
 
 
 def _ensure_credit_redeem_key_schema():
@@ -1016,6 +1043,8 @@ def _ensure_credit_redeem_key_schema():
                         credit_amount INTEGER NOT NULL DEFAULT 0,
                         batch_no VARCHAR(32) NOT NULL,
                         status VARCHAR(20) NOT NULL DEFAULT 'enabled',
+                        source VARCHAR(20) NOT NULL DEFAULT 'system',
+                        is_locked BOOLEAN NOT NULL DEFAULT 0,
                         created_by INTEGER NULL,
                         used_by_user_id INTEGER NULL,
                         used_at DATETIME NULL,
@@ -1026,6 +1055,8 @@ def _ensure_credit_redeem_key_schema():
                         INDEX ix_credit_redeem_keys_redeem_key (redeem_key),
                         INDEX ix_credit_redeem_keys_batch_no (batch_no),
                         INDEX ix_credit_redeem_keys_status (status),
+                        INDEX ix_credit_redeem_keys_source (source),
+                        INDEX ix_credit_redeem_keys_is_locked (is_locked),
                         INDEX ix_credit_redeem_keys_created_by (created_by),
                         INDEX ix_credit_redeem_keys_used_by_user_id (used_by_user_id),
                         CONSTRAINT fk_credit_redeem_keys_created_by FOREIGN KEY (created_by) REFERENCES users (id),
@@ -1048,12 +1079,41 @@ def _ensure_credit_redeem_key_schema():
                     """
                 )
             )
+        if "source" not in credit_redeem_columns:
+            conn.execute(
+                text(
+                    """
+                    ALTER TABLE credit_redeem_keys
+                    ADD COLUMN source VARCHAR(20) NOT NULL DEFAULT 'system'
+                    AFTER status
+                    """
+                )
+            )
+        if "is_locked" not in credit_redeem_columns:
+            conn.execute(
+                text(
+                    """
+                    ALTER TABLE credit_redeem_keys
+                    ADD COLUMN is_locked BOOLEAN NOT NULL DEFAULT 0
+                    AFTER source
+                    """
+                )
+            )
         conn.execute(
             text(
                 """
                 UPDATE credit_redeem_keys
                 SET status = 'enabled'
                 WHERE status IS NULL OR status = ''
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                UPDATE credit_redeem_keys
+                SET source = 'system'
+                WHERE source IS NULL OR source = ''
                 """
             )
         )
@@ -3136,7 +3196,7 @@ upload_path = Path(settings.UPLOAD_DIR)
 upload_path.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(upload_path)), name="uploads")
 
-from app.api import auth, boards, canvases, tasks, video_tasks, images, history, admin, upload, api_key, templates, prompt_reverse, prompt_optimize, prompt_optimize_styles, generation_scene_categories, external_api_config, video_external_api_config, chat_external_api_config, chat, feedback, system_messages, user_api_keys, payment, example_canvases, user_assets, user_prompts, update_logs  # noqa: E402
+from app.api import auth, boards, canvases, tasks, video_tasks, images, history, admin, agent, upload, api_key, templates, prompt_reverse, prompt_optimize, prompt_optimize_styles, generation_scene_categories, external_api_config, video_external_api_config, chat_external_api_config, chat, feedback, system_messages, user_api_keys, payment, example_canvases, user_assets, user_prompts, update_logs  # noqa: E402
 app.include_router(auth.router)
 app.include_router(user_api_keys.router)
 app.include_router(templates.router)
@@ -3158,6 +3218,7 @@ app.include_router(system_messages.admin_router)
 app.include_router(update_logs.router)
 app.include_router(update_logs.admin_router)
 app.include_router(admin.router)
+app.include_router(agent.router)
 app.include_router(example_canvases.admin_router)
 app.include_router(upload.router)
 app.include_router(api_key.router)

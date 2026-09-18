@@ -12,6 +12,7 @@ from app.models.user_credit import (
 )
 
 DEFAULT_CREDIT_TYPE = 0
+AGENT_POOL_CREDIT_TYPE = 1
 
 
 def ensure_user_credit_account(
@@ -175,6 +176,7 @@ def change_user_credit_balance(
             user_id=user_id,
             amount=int(delta),
             type=log_type,
+            credit_type=credit_type,
             description=description,
             operator_id=operator_id,
             task_id=task_id,
@@ -189,5 +191,23 @@ def create_default_credit_account(db: Session, user: User, *, remain_credit: int
         db,
         user.id,
         credit_type=DEFAULT_CREDIT_TYPE,
+        remain_credit=remain_credit,
+    )
+
+
+def create_agent_pool_credit_account(db: Session, user: User, *, remain_credit: int = 0) -> UserCredit:
+    return ensure_user_credit_account(
+        db,
+        user.id,
+        credit_type=AGENT_POOL_CREDIT_TYPE,
+        remain_credit=remain_credit,
+    )
+
+
+def create_agent_pool_credit_account(db: Session, user: User, *, remain_credit: int = 0) -> UserCredit:
+    return ensure_user_credit_account(
+        db,
+        user.id,
+        credit_type=AGENT_POOL_CREDIT_TYPE,
         remain_credit=remain_credit,
     )

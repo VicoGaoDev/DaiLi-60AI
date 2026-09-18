@@ -37,7 +37,19 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+def require_agent(user: User = Depends(get_current_user)) -> User:
+    if user.role != "agent":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="需要代理人权限")
+    return user
+
+
 def require_superadmin(user: User = Depends(get_current_user)) -> User:
     if user.role != "superadmin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="需要超级管理员权限")
+    return user
+
+
+def require_agent(user: User = Depends(get_current_user)) -> User:
+    if user.role != "agent":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="需要代理人权限")
     return user

@@ -122,6 +122,34 @@ const router = createRouter({
           component: () => import("@/views/ApiKeysView.vue"),
         },
         {
+          path: "agentor",
+          name: "AgentOverview",
+          meta: { requiresAgent: true },
+          component: () => import("@/views/agent/AgentOverviewView.vue"),
+        },
+        {
+          path: "agent",
+          redirect: "/agentor",
+        },
+        {
+          path: "agent/redeem-keys",
+          name: "AgentRedeemKeys",
+          redirect: "/agentor",
+        },
+        {
+          path: "agent/credit-logs",
+          name: "AgentCreditLogs",
+          redirect: "/agentor",
+        },
+        {
+          path: "agentor/redeem-keys",
+          redirect: "/agentor",
+        },
+        {
+          path: "agentor/credit-logs",
+          redirect: "/agentor",
+        },
+        {
           path: "feedbacks",
           name: "FeedbackList",
           meta: { requiresAuth: true },
@@ -358,6 +386,9 @@ router.beforeEach((to) => {
     return { name: "Templates" };
   }
   if (to.meta.requiresAdmin && !auth.isAdmin) {
+    return { name: "Templates" };
+  }
+  if (to.meta.requiresAgent && !auth.isAgent) {
     return { name: "Templates" };
   }
 });

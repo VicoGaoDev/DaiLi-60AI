@@ -20,6 +20,8 @@ class UserOut(BaseModel):
     status: str
     is_whitelisted: bool = False
     credits: int = 0
+    personal_credits: int = 0
+    pool_credits: int = 0
     consumed_credits: int = 0
     created_at: datetime | None = None
 
@@ -62,12 +64,18 @@ class UpdateRedeemKeyStatusRequest(BaseModel):
     status: str
 
 
+class UpdateRedeemKeyLockRequest(BaseModel):
+    is_locked: bool
+
+
 class RedeemKeyOut(BaseModel):
     id: int
     redeem_key: str
     credit_amount: int
     batch_no: str
+    source: str = "system"
     status: str
+    is_locked: bool = False
     is_used: bool
     used_at: datetime | None = None
     used_by_user_id: str | None = None

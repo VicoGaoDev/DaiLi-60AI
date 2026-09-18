@@ -298,6 +298,8 @@ export function listRedeemKeys(params: {
   status?: RedeemKeyStatus;
   is_used?: boolean;
   used_by?: string;
+  created_by?: string;
+  source?: "system" | "agent";
   start_date?: string;
   end_date?: string;
 }): Promise<{ total: number; items: AdminRedeemKey[] }> {

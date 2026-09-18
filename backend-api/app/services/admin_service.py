@@ -27,12 +27,16 @@ from app.services.task_type_service import (
     resolve_task_type_for_task,
 )
 from app.services.user_credit_service import (
+    AGENT_POOL_CREDIT_TYPE,
     DEFAULT_CREDIT_TYPE,
     change_user_credit_balance,
+    create_agent_pool_credit_account,
     create_default_credit_account,
+    get_user_credit_account,
     get_user_credit_balance,
     get_user_credits_map,
 )
+from app.services.credit_redeem_service import assert_agent_pool_covers_unused, get_agent_unused_redeem_credit_sum
 from app.utils.datetime_utils import LOCAL_TZ, now_local, to_local_naive
 from app.utils.security import hash_password
 
@@ -105,7 +109,9 @@ def _serialize_user(user: User) -> dict:
         "role": user.role,
         "status": user.status,
         "is_whitelisted": bool(user.is_whitelisted),
-        "credits": get_user_credit_balance(db, user.id) if db else 0,
+        "credits": (get_user_credit_balance(db, user.id, credit_type=AGENT_POOL_CREDIT_TYPE) if user.role == "agent" else get_user_credit_balance(db, user.id)) if db else 0,
+        "personal_credits": get_user_credit_balance(db, user.id) if db else 0,
+        "pool_credits": get_user_credit_balance(db, user.id, credit_type=AGENT_POOL_CREDIT_TYPE) if db and user.role == "agent" else 0,
         "created_at": user.created_at,
     }
 
@@ -118,8 +124,8 @@ def create_user(db: Session, username: str, password: str, role: str = "user", o
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="用户名已存在")
     if len(password) < 6:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="密码至少6位")
-    if role not in ("user", "admin"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="角色必须是 user 或 admin")
+    if role not in ("user", "admin", "agent"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="角色必须是 user、admin 或 agent")
     if role == "admin" and operator and operator.role != "superadmin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="仅超级管理员可创建管理员账号")
 
@@ -127,6 +133,8 @@ def create_user(db: Session, username: str, password: str, role: str = "user", o
     db.add(user)
     db.flush()
     create_default_credit_account(db, user)
+    if role == "agent":
+        create_agent_pool_credit_account(db, user)
     db.commit()
     db.refresh(user)
     return _serialize_user(user)
@@ -141,6 +149,7 @@ def list_users(db: Session) -> list[dict]:
     )
     user_ids = [user.id for user in users]
     credit_map = get_user_credits_map(db, user_ids)
+    pool_credit_map = get_user_credits_map(db, user_ids, credit_type=AGENT_POOL_CREDIT_TYPE)
     consumed_credit_rows = (
         db.query(
             CreditLog.user_id,
@@ -148,6 +157,7 @@ def list_users(db: Session) -> list[dict]:
         )
         .filter(
             CreditLog.user_id.in_(user_ids),
+            CreditLog.credit_type == DEFAULT_CREDIT_TYPE,
             CreditLog.type == "consume",
         )
         .group_by(CreditLog.user_id)
@@ -160,6 +170,7 @@ def list_users(db: Session) -> list[dict]:
         )
         .filter(
             CreditLog.user_id.in_(user_ids),
+            CreditLog.credit_type == DEFAULT_CREDIT_TYPE,
             CreditLog.type == "allocate",
             _task_credit_refund_filter(),
         )
@@ -218,6 +229,7 @@ def get_user_detail(db: Session, user_id: str) -> dict:
         db.query(func.coalesce(func.sum(func.abs(CreditLog.amount)), 0))
         .filter(
             CreditLog.user_id == user.id,
+            CreditLog.credit_type == DEFAULT_CREDIT_TYPE,
             CreditLog.type == "consume",
         )
         .scalar()
@@ -226,6 +238,7 @@ def get_user_detail(db: Session, user_id: str) -> dict:
         db.query(func.coalesce(func.sum(CreditLog.amount), 0))
         .filter(
             CreditLog.user_id == user.id,
+            CreditLog.credit_type == DEFAULT_CREDIT_TYPE,
             CreditLog.type == "allocate",
             _task_credit_refund_filter(),
         )
@@ -233,12 +246,13 @@ def get_user_detail(db: Session, user_id: str) -> dict:
     ) or 0
     return _serialize_user_with_balance(
         user,
-        get_user_credit_balance(db, user.id),
+        get_user_credit_balance(db, user.id, credit_type=AGENT_POOL_CREDIT_TYPE) if user.role == "agent" else get_user_credit_balance(db, user.id),
         max(int(consumed_credits) - int(refunded_credits), 0),
     )
 
 
 def _serialize_user_with_balance(user: User, balance: int, consumed_credits: int = 0) -> dict:
+    db = user._sa_instance_state.session
     return {
         "id": user_external_id(user),
         "username": user.username,
@@ -248,6 +262,8 @@ def _serialize_user_with_balance(user: User, balance: int, consumed_credits: int
         "status": user.status,
         "is_whitelisted": bool(user.is_whitelisted),
         "credits": int(balance or 0),
+        "personal_credits": get_user_credit_balance(db, user.id) if db else int(balance or 0),
+        "pool_credits": get_user_credit_balance(db, user.id, credit_type=AGENT_POOL_CREDIT_TYPE) if db and user.role == "agent" else 0,
         "consumed_credits": int(consumed_credits or 0),
         "created_at": user.created_at,
     }
@@ -272,8 +288,8 @@ def update_user_status(db: Session, user_id: str, new_status: str) -> dict:
 
 
 def update_user_role(db: Session, user_id: str, new_role: str) -> dict:
-    if new_role not in ("user", "admin"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="角色必须是 user 或 admin")
+    if new_role not in ("user", "admin", "agent"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="角色必须是 user、admin 或 agent")
 
     user = get_user_by_business_id(db, user_id)
     if not user:
@@ -282,8 +298,12 @@ def update_user_role(db: Session, user_id: str, new_role: str) -> dict:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="无法修改超级管理员")
     if user.id == _get_first_admin_id(db) and new_role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="初始管理员不允许被降级")
+    if user.role == "agent" and new_role != "agent" and get_agent_unused_redeem_credit_sum(db, user.id) > 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="请先禁用或删除该代理人的未使用兑换码")
 
     user.role = new_role
+    if new_role == "agent":
+        create_agent_pool_credit_account(db, user)
     db.commit()
     db.refresh(user)
     return _serialize_user(user)
@@ -324,13 +344,18 @@ def allocate_credits(db: Session, user_id: str, amount: int, description: str, o
     user = get_user_by_business_id(db, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
+    credit_type = AGENT_POOL_CREDIT_TYPE if user.role == "agent" else DEFAULT_CREDIT_TYPE
+    if user.role == "agent" and amount < 0:
+        account = get_user_credit_account(db, user.id, credit_type=AGENT_POOL_CREDIT_TYPE, create_if_missing=True)
+        assert_agent_pool_covers_unused(db, user, pool_remain_override=int(account.remain_credit or 0) + int(amount))
     change_user_credit_balance(
         db,
         user.id,
         delta=amount,
         log_type="allocate",
-        description=description or ("管理员充值" if amount > 0 else "管理员扣减"),
+        description=description or ("管理员分配代理积分池" if user.role == "agent" and amount > 0 else "管理员扣减代理积分池" if user.role == "agent" else "管理员充值" if amount > 0 else "管理员扣减"),
         operator_id=operator_id,
+        credit_type=credit_type,
     )
     db.commit()
     db.refresh(user)
@@ -341,9 +366,12 @@ def reset_user_credits(db: Session, user_id: str, description: str, operator_id:
     user = get_user_by_business_id(db, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
-    current_balance = get_user_credit_balance(db, user.id)
+    credit_type = AGENT_POOL_CREDIT_TYPE if user.role == "agent" else DEFAULT_CREDIT_TYPE
+    current_balance = get_user_credit_balance(db, user.id, credit_type=credit_type)
     if current_balance <= 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="当前积分已为 0，无需清零")
+    if user.role == "agent":
+        assert_agent_pool_covers_unused(db, user, pool_remain_override=0)
 
     deducted_amount = int(current_balance or 0)
     change_user_credit_balance(
@@ -351,8 +379,9 @@ def reset_user_credits(db: Session, user_id: str, description: str, operator_id:
         user.id,
         delta=-deducted_amount,
         log_type="allocate",
-        description=description or f"管理员积分清零（原余额 {deducted_amount}）",
+        description=description or f"{'管理员代理积分池清零' if user.role == 'agent' else '管理员积分清零'}（原余额 {deducted_amount}）",
         operator_id=operator_id,
+        credit_type=credit_type,
     )
     db.commit()
     db.refresh(user)

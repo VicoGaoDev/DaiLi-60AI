@@ -36,6 +36,8 @@ const filters = reactive({
   status: undefined as RedeemKeyStatus | undefined,
   isUsed: undefined as boolean | undefined,
   usedBy: "",
+  createdBy: "",
+  source: undefined as "system" | "agent" | undefined,
   dateRange: null as [Dayjs, Dayjs] | null,
 });
 
@@ -49,6 +51,8 @@ const columns = [
   { title: "批次", dataIndex: "batch_no", width: 170 },
   { title: "兑换码", dataIndex: "redeem_key", width: 190 },
   { title: "积分值", dataIndex: "credit_amount", width: 88 },
+  { title: "来源", dataIndex: "source", width: 90 },
+  { title: "发行人", dataIndex: "created_by_username", width: 120 },
   { title: "状态", dataIndex: "status", width: 90 },
   { title: "是否已使用", dataIndex: "is_used", width: 100 },
   { title: "使用人", dataIndex: "used_by_username", width: 220 },
@@ -89,6 +93,8 @@ async function load() {
       status: filters.status,
       is_used: filters.isUsed,
       used_by: filters.usedBy.trim() || undefined,
+      created_by: filters.createdBy.trim() || undefined,
+      source: filters.source,
       start_date: formatQueryDate(filters.dateRange?.[0].startOf("day")),
       end_date: formatQueryDate(filters.dateRange?.[1].endOf("day")),
     });
@@ -136,6 +142,8 @@ function handleReset() {
   filters.status = undefined;
   filters.isUsed = undefined;
   filters.usedBy = "";
+  filters.createdBy = "";
+  filters.source = undefined;
   filters.dateRange = null;
   dateShortcut.value = undefined;
   pagination.page = 1;
@@ -356,6 +364,21 @@ onMounted(() => {
         placeholder="按使用人/邮箱筛选"
         class="warm-input redeem-filter-input"
       />
+      <a-input
+        v-model:value="filters.createdBy"
+        allow-clear
+        placeholder="按发行人筛选"
+        class="warm-input redeem-filter-input"
+      />
+      <a-select
+        v-model:value="filters.source"
+        allow-clear
+        placeholder="来源"
+        class="warm-select redeem-filter-select"
+      >
+        <a-select-option value="system">系统</a-select-option>
+        <a-select-option value="agent">代理</a-select-option>
+      </a-select>
       <a-range-picker
         v-model:value="filters.dateRange"
         :placeholder="['使用开始', '使用结束']"
@@ -399,7 +422,7 @@ onMounted(() => {
         :pagination="false"
         row-key="id"
         :row-selection="rowSelection"
-        :scroll="{ x: 980 }"
+        :scroll="{ x: 1180 }"
         class="admin-mobile-table"
       >
         <template #bodyCell="{ column, record }">
@@ -416,6 +439,14 @@ onMounted(() => {
           </template>
           <template v-else-if="column.dataIndex === 'credit_amount'">
             <span class="credit-amount">{{ record.credit_amount }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'source'">
+            <a-tag class="warm-tag" :class="record.source === 'agent' ? 'warm-tag-whitelist' : 'warm-tag-muted'">
+              {{ record.source === "agent" ? "代理" : "系统" }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'created_by_username'">
+            {{ record.created_by_username || "-" }}
           </template>
           <template v-else-if="column.dataIndex === 'status'">
             <a-tag class="warm-tag" :class="record.status === 'enabled' ? 'warm-tag-whitelist' : 'warm-tag-muted'">

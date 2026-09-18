@@ -8,6 +8,7 @@ class CreditLog(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    credit_type = Column(Integer, nullable=False, default=0, server_default="0", index=True)
     amount = Column(Integer, nullable=False)
     type = Column(String(20), nullable=False)  # "allocate" | "consume"
     description = Column(String(500), default="")

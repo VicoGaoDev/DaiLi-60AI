@@ -5,7 +5,7 @@ export interface UserInfo {
   email?: string | null;
   phone?: string | null;
   password_set?: boolean;
-  role: "user" | "admin" | "superadmin";
+  role: "user" | "admin" | "superadmin" | "agent";
   avatar_url?: string;
   credits: number;
   is_whitelisted: boolean;
@@ -756,6 +756,8 @@ export interface AdminUser {
   status: string;
   is_whitelisted: boolean;
   credits: number;
+  personal_credits?: number;
+  pool_credits?: number;
   consumed_credits: number;
   created_at: string;
 }
@@ -784,8 +786,9 @@ export interface CreditLog {
   user_id: string;
   username: string;
   amount: number;
-  type: "allocate" | "consume";
+  type: "allocate" | "consume" | "agent_pool_deduct";
   mode: TaskType | "manual" | "redeem" | "purchase";
+  redeem_key?: string;
   description: string;
   operator_name: string;
   task_id?: string;
@@ -1120,7 +1123,9 @@ export interface AdminRedeemKey {
   redeem_key: string;
   credit_amount: number;
   batch_no: string;
+  source?: "system" | "agent";
   status: RedeemKeyStatus;
+  is_locked?: boolean;
   is_used: boolean;
   used_at?: string | null;
   used_by_user_id?: string | null;
@@ -1129,6 +1134,13 @@ export interface AdminRedeemKey {
   created_by_user_id?: string | null;
   created_by_username: string;
   created_at?: string | null;
+}
+
+export interface AgentOverview {
+  pool_credits: number;
+  unused_redeem_credits: number;
+  issuable_credits: number;
+  redeemed_credits: number;
 }
 
 export interface AdminRedeemKeyBatchResult {

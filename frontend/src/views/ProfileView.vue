@@ -64,6 +64,7 @@ function closeAvatarPreview() {
 const roleLabel = computed(() => {
   if (auth.user?.role === "superadmin") return "超级管理员";
   if (auth.user?.role === "admin") return "管理员";
+  if (auth.user?.role === "agent") return "代理人";
   return "积分用户";
 });
 

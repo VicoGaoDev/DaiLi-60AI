@@ -167,6 +167,16 @@ function toggleStatus(u: AdminUser) {
 function toggleRole(u: AdminUser) {
   const next = u.role === "admin" ? "user" : "admin";
   const label = next === "admin" ? "设为管理员" : "取消管理员";
+  setUserRole(u, next, label);
+}
+
+function toggleAgentRole(u: AdminUser) {
+  const next = u.role === "agent" ? "user" : "agent";
+  const label = next === "agent" ? "设为代理人" : "取消代理人";
+  setUserRole(u, next, label);
+}
+
+function setUserRole(u: AdminUser, next: string, label: string) {
   Modal.confirm({
     title: `确认${label} "${u.username}" ？`,
     centered: true,
@@ -179,6 +189,22 @@ function toggleRole(u: AdminUser) {
       ]);
     },
   });
+}
+
+function roleLabel(role: string) {
+  if (role === "admin") return "管理员";
+  if (role === "agent") return "代理人";
+  return "普通用户";
+}
+
+function roleTagClass(role: string) {
+  if (role === "admin") return "warm-tag-role-admin";
+  if (role === "agent") return "warm-tag-agent";
+  return "warm-tag-role-user";
+}
+
+function creditLabel(user: AdminUser) {
+  return user.role === "agent" ? "代理积分池" : "剩余积分";
 }
 
 function openResetPwd(u: AdminUser) {
@@ -248,9 +274,10 @@ async function handleAllocateCredits() {
 }
 
 function handleResetCredits(user: AdminUser) {
+  const label = creditLabel(user);
   Modal.confirm({
-    title: `确认将 "${user.username}" 的积分清零？`,
-    content: `当前剩余积分为 ${user.credits}，清零后会写入积分日志。`,
+    title: `确认将 "${user.username}" 的${label}清零？`,
+    content: `当前${label}为 ${user.credits}，清零后会写入积分日志。`,
     okText: "确认清零",
     okButtonProps: { danger: true },
     centered: true,
@@ -467,15 +494,18 @@ function promoActivityRowKey(record: {
             </div>
           </template>
           <template v-else-if="column.dataIndex === 'role'">
-            <a-tag class="warm-tag" :class="record.role === 'admin' ? 'warm-tag-role-admin' : 'warm-tag-role-user'">
-              {{ record.role === "admin" ? "管理员" : "普通用户" }}
+            <a-tag class="warm-tag" :class="roleTagClass(record.role)">
+              {{ roleLabel(record.role) }}
             </a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'consumed_credits'">
             <span style="font-weight: 700; color: #cf1322">{{ record.consumed_credits ?? 0 }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'credits'">
-            <span style="font-weight: 700; color: var(--theme-accent-text)">{{ record.credits }}</span>
+            <div class="credit-cell">
+              <span class="credit-main">{{ record.credits }}</span>
+              <span v-if="record.role === 'agent'" class="credit-sub">个人 {{ record.personal_credits ?? 0 }}</span>
+            </div>
           </template>
           <template v-else-if="column.dataIndex === 'status'">
             <a-badge :status="record.status === 'active' ? 'success' : 'error'" />
@@ -488,7 +518,7 @@ function promoActivityRowKey(record: {
             <div class="table-actions">
               <a-button type="link" size="small" class="user-action-btn user-action-btn-primary" @click="openCredits(record)">
                 <template #icon><WalletOutlined /></template>
-                分配积分
+                {{ record.role === "agent" ? "分配代理池" : "分配积分" }}
               </a-button>
               <a-button
                 type="link"
@@ -538,6 +568,15 @@ function promoActivityRowKey(record: {
                 >
                   {{ record.role === "admin" ? "取消管理员" : "设为管理员" }}
                 </a-button>
+                <a-button
+                  type="link"
+                  size="small"
+                  class="user-action-btn user-action-btn-secondary"
+                  :disabled="isFirstAdmin(record)"
+                  @click="toggleAgentRole(record)"
+                >
+                  {{ record.role === "agent" ? "取消代理人" : "设为代理人" }}
+                </a-button>
                 <a-button type="link" size="small" class="user-action-btn user-action-btn-secondary" @click="openResetPwd(record)">
                   重置密码
                 </a-button>
@@ -584,6 +623,7 @@ function promoActivityRowKey(record: {
           <a-radio-group v-model:value="form.role" class="warm-radio-group">
             <a-radio value="user">普通用户</a-radio>
             <a-radio value="admin">管理员</a-radio>
+            <a-radio value="agent">代理人</a-radio>
           </a-radio-group>
         </a-form-item>
         <a-form-item v-else label="角色" style="margin-bottom: 0">
@@ -615,7 +655,7 @@ function promoActivityRowKey(record: {
     <!-- Allocate credits modal -->
     <a-modal
       v-model:open="creditsOpen"
-      :title="`分配积分 — ${creditsTarget?.username}`"
+      :title="`${creditsTarget?.role === 'agent' ? '分配代理积分池' : '分配积分'} — ${creditsTarget?.username}`"
       :confirm-loading="creditsLoading"
       :ok-button-props="{ class: 'warm-primary-btn' }"
       :cancel-button-props="{ class: 'warm-secondary-btn' }"
@@ -626,7 +666,7 @@ function promoActivityRowKey(record: {
       @ok="handleAllocateCredits"
     >
       <a-form layout="vertical" style="margin-top: 16px">
-        <a-form-item label="积分数量（正数充值，负数扣减）">
+        <a-form-item :label="`${creditsTarget?.role === 'agent' ? '代理积分池' : '积分'}数量（正数充值，负数扣减）`">
           <a-input-number v-model:value="creditsForm.amount" class="warm-input-number" placeholder="请输入积分数量" />
         </a-form-item>
         <a-form-item label="备注说明" style="margin-bottom: 0">
@@ -669,7 +709,7 @@ function promoActivityRowKey(record: {
                   <a-tag v-if="user.is_whitelisted" class="warm-tag warm-tag-whitelist">白名单</a-tag>
                 </div>
                 <div class="whitelist-user-sub">
-                  {{ user.email || user.phone || "未绑定邮箱或手机号" }} · {{ user.role === "admin" ? "管理员" : "普通用户" }} · 积分 {{ user.credits }}
+                  {{ user.email || user.phone || "未绑定邮箱或手机号" }} · {{ roleLabel(user.role) }} · {{ creditLabel(user) }} {{ user.credits }}
                 </div>
               </div>
             </div>
@@ -1019,6 +1059,28 @@ function promoActivityRowKey(record: {
   border-color: var(--theme-panel-border-strong);
 }
 
+.warm-tag-agent {
+  color: #389e0d;
+  background: rgba(82, 196, 26, 0.12);
+  border-color: rgba(82, 196, 26, 0.35);
+}
+
+.credit-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.credit-main {
+  color: var(--theme-accent-text);
+  font-weight: 700;
+}
+
+.credit-sub {
+  color: #8c7458;
+  font-size: 12px;
+}
+
 .promo-dashboard {
   display: grid;
   gap: 18px;
@@ -1110,6 +1172,7 @@ function promoActivityRowKey(record: {
 
 html:is([data-theme="dark"], [data-theme="midnight"]) .warm-page .warm-tag-role-admin,
 html:is([data-theme="dark"], [data-theme="midnight"]) .warm-page .warm-tag-role-user,
+html:is([data-theme="dark"], [data-theme="midnight"]) .warm-page .warm-tag-agent,
 html:is([data-theme="dark"], [data-theme="midnight"]) .warm-page .warm-tag-whitelist,
 html:is([data-theme="dark"], [data-theme="midnight"]) .warm-page .warm-tag-muted {
   background: var(--theme-panel-bg) !important;
@@ -1120,6 +1183,7 @@ html:is([data-theme="dark"], [data-theme="midnight"]) .warm-page .warm-tag-muted
 
 html[data-theme="midnight"] .warm-page .warm-tag-role-admin,
 html[data-theme="midnight"] .warm-page .warm-tag-role-user,
+html[data-theme="midnight"] .warm-page .warm-tag-agent,
 html[data-theme="midnight"] .warm-page .warm-tag-whitelist,
 html[data-theme="midnight"] .warm-page .warm-tag-muted {
   background: var(--theme-tag-bg) !important;
