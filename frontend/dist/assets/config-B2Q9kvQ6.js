@@ -1,1 +1,0 @@
-import{c6 as e}from"./index-BifiXCp8.js";function n(){return e.get("/config/generation-models")}function o(){return e.get("/config/task-scenes")}function i(){return e.get("/config/prompt-optimize-styles")}export{o as a,i as b,n as g};

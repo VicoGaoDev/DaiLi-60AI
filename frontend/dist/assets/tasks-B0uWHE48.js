@@ -1,1 +1,0 @@
-import{c6 as t}from"./index-BifiXCp8.js";function n(s){return t.post("/tasks",{...s,source:s.source||"web"})}function c(s){return t.get(`/tasks/${s}`)}function o(s){const a=new URLSearchParams;return s.forEach(r=>{a.append("task_ids",String(r))}),t.get(`/tasks?${a.toString()}`)}export{c as a,n as c,o as g};
