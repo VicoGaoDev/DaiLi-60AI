@@ -202,7 +202,7 @@ watch(loadMoreAnchor, (target) => {
       <div class="templates-topbar-actions">
         <a-button
           class="template-guide-btn"
-          href="https://80ai.net/gptimage2-prompt"
+          href="https://60ai.top/gptimage2-prompt"
           target="_blank"
           rel="noreferrer"
         >

@@ -157,7 +157,7 @@ function fmtTime(t?: string | null) {
 }
 
 function openApiDocs() {
-  window.open("https://80ai.net/docs-api/", "_blank", "noopener,noreferrer");
+  window.open("https://60ai.top/docs-api/", "_blank", "noopener,noreferrer");
 }
 </script>
 

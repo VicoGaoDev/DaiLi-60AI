@@ -56,7 +56,7 @@ async function drawQrBrand(context: CanvasRenderingContext2D, size = BRANDED_QR_
     context.font = "700 15px Inter, PingFang SC, Microsoft YaHei, sans-serif";
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.fillText("80AI", size / 2, size / 2 + 1);
+    context.fillText("60AI", size / 2, size / 2 + 1);
     context.restore();
   }
 }

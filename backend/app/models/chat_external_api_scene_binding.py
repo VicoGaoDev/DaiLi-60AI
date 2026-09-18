@@ -21,5 +21,5 @@ class ChatExternalApiSceneBinding(Base):
     system_prompt = Column(Text, nullable=False, default="")
     context_message_limit = Column(Integer, nullable=False, default=10, server_default="10")
     opening_greeting = Column(String(1000), nullable=False, default="", server_default="")
-    starter_prompts_json = Column(Text, nullable=False, default="[]", server_default="[]")
+    starter_prompts_json = Column(Text, nullable=False, default="[]")
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

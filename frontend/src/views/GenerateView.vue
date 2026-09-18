@@ -4807,7 +4807,7 @@ watch(() => auth.isLoggedIn, async (isLoggedIn) => {
                 <div class="generate-link-tip">
                   <div class="generate-link-tip-left">
                     <a
-                      href="https://80ai.net/gptimage2-prompt"
+                      href="https://60ai.top/gptimage2-prompt"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="generate-link-tip-anchor"
@@ -5343,7 +5343,7 @@ watch(() => auth.isLoggedIn, async (isLoggedIn) => {
                 <div class="generate-link-tip">
                   <div class="generate-link-tip-left">
                     <a
-                      href="https://80ai.net/gptimage2-prompt"
+                      href="https://60ai.top/gptimage2-prompt"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="generate-link-tip-anchor"
@@ -5451,7 +5451,7 @@ watch(() => auth.isLoggedIn, async (isLoggedIn) => {
                 <div class="generate-link-tip">
                   <div class="generate-link-tip-left">
                     <a
-                      href="https://80ai.net/gptimage2-prompt"
+                      href="https://60ai.top/gptimage2-prompt"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="generate-link-tip-anchor"

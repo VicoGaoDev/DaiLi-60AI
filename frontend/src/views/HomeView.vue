@@ -343,7 +343,7 @@ function openFooterContact() {
     openCreditsContact();
     return;
   }
-  window.location.href = "mailto:support@80ai.net";
+  window.location.href = "mailto:support@60ai.top";
 }
 
 onMounted(() => {
@@ -569,12 +569,12 @@ onBeforeUnmount(() => {
     </section>
 
     <footer class="home-footer motion-fade-up" style="--motion-delay: 0.2s">
-      <div class="home-footer-watermark" aria-hidden="true">80AI</div>
+      <div class="home-footer-watermark" aria-hidden="true">60AI</div>
       <div class="home-footer-main">
         <div class="home-footer-brand">
           <button type="button" class="home-footer-logo" @click="router.push('/')">
-            <img src="/香蕉.svg" alt="80AI" />
-            <span>80AI.net</span>
+            <img src="/香蕉.svg" alt="60AI" />
+            <span>60AI.top</span>
           </button>
           <p>聚合全球领先 AI 生图模型，一个入口接入数百种创作能力。</p>
         </div>
@@ -595,13 +595,13 @@ onBeforeUnmount(() => {
           <div class="home-footer-column">
             <div class="home-footer-column-title">联系</div>
             <button type="button" class="home-footer-link" @click="openFooterContact">联系我们</button>
-            <a class="home-footer-link" href="mailto:support@80ai.net">邮箱</a>
+            <a class="home-footer-link" href="mailto:support@60ai.top">邮箱</a>
           </div>
         </div>
       </div>
 
       <div class="home-footer-bottom">
-        <span>@ 2026 80AI. 版权所有</span>
+        <span>@ 2026 60AI. 版权所有</span>
         <div class="home-footer-legal">
           <button
             v-for="item in footerLegalLinks"

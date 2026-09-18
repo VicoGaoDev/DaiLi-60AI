@@ -59,7 +59,7 @@ onMounted(load);
         <div class="message-head">
           <h3>{{ detail.subject }}</h3>
           <div class="message-meta">
-            <span>发送人：80AI管理员</span>
+            <span>发送人：60AI管理员</span>
             <span>发送时间：{{ formatTime(detail.created_at) }}</span>
             <span>阅读状态：{{ detail.is_read ? "已读" : "未读" }}</span>
           </div>

@@ -14,7 +14,7 @@ class PromptOptimizeTask(Base):
     source = Column(String(20), nullable=False, default="web", server_default="web")
     original_prompt = Column(String(5000), nullable=False, default="", server_default="")
     optimized_prompt = Column(String(5000), nullable=False, default="", server_default="")
-    reference_images_json = Column(Text, nullable=False, default="[]", server_default="[]")
+    reference_images_json = Column(Text, nullable=False, default="[]")
     source_image = Column(String(500), nullable=False, default="", server_default="")
     status = Column(String(20), nullable=False, default="success", server_default="success")
     credit_cost = Column(Integer, nullable=False, default=0, server_default="0")

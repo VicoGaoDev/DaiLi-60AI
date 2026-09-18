@@ -332,7 +332,7 @@ onBeforeUnmount(() => {
           <div class="detail-head">
             <h3>{{ detail.subject }}</h3>
             <div class="detail-meta">
-              <span>发送人：80AI管理员</span>
+              <span>发送人：60AI管理员</span>
               <span>发送时间：{{ formatTime(detail.created_at) }}</span>
               <span>接收范围：{{ scopeLabel(detail.recipient_scope) }}</span>
               <span>接收人数：{{ detail.recipient_count }}</span>

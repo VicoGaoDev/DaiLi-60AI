@@ -1958,7 +1958,7 @@ function handleDeleteScene(record: ExternalApiSceneBinding) {
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="场景名称" required>
-              <a-input v-model:value="sceneForm.scene_label" class="warm-input" placeholder="例如：80AI Ultra" />
+              <a-input v-model:value="sceneForm.scene_label" class="warm-input" placeholder="例如：60AI Ultra" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -2375,12 +2375,12 @@ function handleDeleteScene(record: ExternalApiSceneBinding) {
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="配置名称" required>
-              <a-input v-model:value="form.name" class="warm-input" placeholder="例如：80AI 主接口" />
+              <a-input v-model:value="form.name" class="warm-input" placeholder="例如：60AI 主接口" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="接口分组">
-              <a-input v-model:value="form.group_name" class="warm-input" placeholder="例如：80AI 系列 / 反推接口" />
+              <a-input v-model:value="form.group_name" class="warm-input" placeholder="例如：60AI 系列 / 反推接口" />
             </a-form-item>
           </a-col>
         </a-row>

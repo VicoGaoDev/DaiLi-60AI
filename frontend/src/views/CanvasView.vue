@@ -4993,10 +4993,10 @@ onBeforeUnmount(() => {
         </button>
         <button type="button" class="canvas-brand-link" title="返回画布列表" @click="goCanvasList">
           <span class="canvas-brand-mark">
-            <img src="/香蕉.svg" alt="80AI" />
+            <img src="/香蕉.svg" alt="60AI" />
           </span>
           <span class="canvas-brand-copy">
-            <span class="canvas-brand-name">80AI</span>
+            <span class="canvas-brand-name">60AI</span>
             <span class="canvas-brand-sub">画布列表</span>
           </span>
         </button>

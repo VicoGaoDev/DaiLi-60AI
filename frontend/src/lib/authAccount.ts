@@ -77,11 +77,11 @@ const bannedEmailDomainSuffixes = [
 ] as const;
 
 const reservedEmailDomainSuffixes = [
-  "80ai.net",
-  "80ai.cn",
-  "80ai.com",
-  "80ai.org",
-  "80ai.top",
+  "60ai.net",
+  "60ai.cn",
+  "60ai.com",
+  "60ai.org",
+  "60ai.top",
 ] as const;
 
 export function normalizePhone(phone: string) {

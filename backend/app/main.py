@@ -202,11 +202,13 @@ def _ensure_schema_compat():
         if "custom_size" not in task_columns:
             conn.execute(text("ALTER TABLE tasks ADD COLUMN custom_size VARCHAR(50) DEFAULT ''"))
         if "prompt" not in task_columns:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN prompt TEXT DEFAULT ''"))
+            conn.execute(text("ALTER TABLE tasks ADD COLUMN prompt TEXT NULL"))
+            conn.execute(text("UPDATE tasks SET prompt = '' WHERE prompt IS NULL"))
         if "num_images" not in task_columns:
             conn.execute(text("ALTER TABLE tasks ADD COLUMN num_images INTEGER DEFAULT 4"))
         if "reference_images" not in task_columns:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN reference_images TEXT DEFAULT ''"))
+            conn.execute(text("ALTER TABLE tasks ADD COLUMN reference_images TEXT NULL"))
+            conn.execute(text("UPDATE tasks SET reference_images = '' WHERE reference_images IS NULL"))
         if "mode" not in task_columns:
             conn.execute(text("ALTER TABLE tasks ADD COLUMN mode VARCHAR(20) DEFAULT 'generate'"))
         if "source_image" not in task_columns:

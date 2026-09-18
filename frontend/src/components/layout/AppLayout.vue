@@ -1645,10 +1645,10 @@ watch(
         <div class="header-brand-wrap">
           <div class="header-brand" @click="router.push('/')">
             <div class="brand-mark">
-              <img src="/香蕉.svg" alt="80AI" class="brand-mark-image" />
+              <img src="/香蕉.svg" alt="60AI" class="brand-mark-image" />
             </div>
             <div class="brand-copy">
-              <span class="brand-name">80AI</span>
+              <span class="brand-name">60AI</span>
               <span class="brand-sub">AI Creative Studio</span>
             </div>
           </div>
@@ -1949,9 +1949,9 @@ watch(
     <aside v-if="showDesktopSideNav" ref="desktopSideNavRef" class="canvas-side-nav" aria-label="全局导航">
       <div class="canvas-side-brand-wrap">
         <button type="button" class="canvas-side-brand" title="返回首页" @click="router.push('/')">
-          <img src="/香蕉.svg" alt="80AI" class="brand-mark-image" />
+          <img src="/香蕉.svg" alt="60AI" class="brand-mark-image" />
         </button>
-        <span class="canvas-side-brand-name">80AI</span>
+        <span class="canvas-side-brand-name">60AI</span>
       </div>
       <nav class="canvas-side-nav-menu">
         <template v-for="item in primaryMenuItems" :key="item.key">
@@ -2303,10 +2303,10 @@ watch(
         <div class="mobile-drawer-brand">
           <div class="mobile-drawer-brand-main">
             <div class="brand-mark">
-              <img src="/香蕉.svg" alt="80AI" class="brand-mark-image" />
+              <img src="/香蕉.svg" alt="60AI" class="brand-mark-image" />
             </div>
             <div class="brand-copy">
-              <span class="brand-name">80AI</span>
+              <span class="brand-name">60AI</span>
               <span class="brand-sub">AI Creative Studio</span>
             </div>
           </div>
