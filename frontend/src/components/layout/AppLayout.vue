@@ -32,6 +32,7 @@ import {
 } from "@/lib/systemMessageNotice";
 import { contentLooksLikeHtml } from "@/lib/htmlContent";
 import { subscribeAuthSessionExpired } from "@/lib/authSessionNotice";
+import { listUpdateLogs } from "@/api/updateLogs";
 import {
   isAiAssistantDockTabEnabled,
   subscribeAiAssistantDockTabEnabled,
@@ -354,11 +355,10 @@ const videoEntryMenuItems: Array<{ key: VideoEntryMenuKey; mode: VideoEntryMode;
   { key: "video-firstLastFrame", mode: "firstLastFrame", label: "首尾帧视频", icon: VideoCameraOutlined },
 ];
 
-type MoreFeatureMenuKey = "templates" | "history" | "tutorial";
+type MoreFeatureMenuKey = "templates" | "history";
 const moreFeatureMenuItems: Array<{ key: MoreFeatureMenuKey; label: string; icon: Component; iconSrc: string }> = [
   { key: "templates", label: "创意模版", icon: BulbOutlined, iconSrc: withBaseUrl("nav-templates.svg") },
   { key: "history", label: "历史图片", icon: ClockCircleOutlined, iconSrc: withBaseUrl("nav-history.svg") },
-  { key: "tutorial", label: "使用教程", icon: ReadOutlined, iconSrc: withBaseUrl("nav-templates.svg") },
 ];
 
 const primaryMenuItems = computed<PrimaryMenuItem[]>(() => [
@@ -414,6 +414,7 @@ const adminMenuItems = computed(() =>
     { key: "/admin/prompt-optimize", label: "提示词优化", icon: ThunderboltOutlined, superAdminOnly: false },
     { key: "/admin/example-canvases", label: "画布模版", icon: AppstoreOutlined, superAdminOnly: false },
     { key: "/admin/users", label: "用户管理", icon: TeamOutlined, superAdminOnly: false },
+    { key: "/admin/agents", label: "代理人数据", icon: UsergroupAddOutlined, superAdminOnly: false },
     { key: "/admin/user-tasks", label: "用户图片", icon: PictureOutlined, superAdminOnly: false },
     { key: "/admin/user-videos", label: "用户视频", icon: VideoCameraOutlined, superAdminOnly: false },
     { key: "/admin/user-canvases", label: "用户画布", icon: NumberOutlined, superAdminOnly: false },
@@ -444,6 +445,7 @@ const adminMenuTemplateItems = computed(() =>
 const adminMenuUserDataItems = computed(() =>
   adminMenuItems.value.filter((item) => [
     "/admin/users",
+    "/admin/agents",
     "/admin/user-tasks",
     "/admin/user-videos",
     "/admin/user-canvases",
@@ -476,6 +478,7 @@ const isAdminTemplateRoute = computed(() =>
 );
 const isAdminUserDataRoute = computed(() =>
   route.path.startsWith("/admin/users")
+  || route.path.startsWith("/admin/agents")
   || route.path.startsWith("/admin/user-tasks")
   || route.path.startsWith("/admin/user-videos")
   || route.path.startsWith("/admin/user-canvases")
@@ -566,6 +569,14 @@ const hasUserUnreadSystemMessage = computed(() => userUnreadSystemMessageCount.v
 const hasUserUnreadNotice = computed(() =>
   (SHOW_USER_FEEDBACK_ENTRY && hasUserUnreadFeedback.value) || hasUserUnreadSystemMessage.value
 );
+const notificationCenterUnreadCount = computed(() => {
+  const feedbackCount = SHOW_USER_FEEDBACK_ENTRY ? Number(userCompletedUnreadFeedbackCount.value || 0) : 0;
+  return feedbackCount + Number(userUnreadSystemMessageCount.value || 0);
+});
+const hasRecentUpdateLog = ref(false);
+const hasNotificationCenterHighlight = computed(() =>
+  hasRecentUpdateLog.value || notificationCenterUnreadCount.value > 0
+);
 
 const userMenuItems = computed(() => [
   { key: "profile", label: "个人主页", icon: UserOutlined, danger: false },
@@ -581,13 +592,10 @@ const userMenuItems = computed(() => [
   { key: "logout", label: "退出登录", icon: LogoutOutlined, danger: true },
 ]);
 const userMenuAccountItems = computed(() =>
-  userMenuItems.value.filter((item) => ["profile", "credits", "agent", "promo-codes", "api-keys"].includes(item.key))
+  userMenuItems.value.filter((item) => ["profile", "credits", "promo-codes"].includes(item.key))
 );
 const userMenuSettingsItems = computed(() =>
   userMenuItems.value.filter((item) => ["contact"].includes(item.key))
-);
-const userMenuNoticeItems = computed(() =>
-  userMenuItems.value.filter((item) => ["my-feedback", "system-messages", "update-logs"].includes(item.key))
 );
 const userMenuDangerItems = computed(() => userMenuItems.value.filter((item) => item.danger));
 
@@ -617,7 +625,7 @@ const selectedKeys = computed(() => {
   if (p.startsWith("/admin")) return ["admin"];
   if (p === "/") return [];
   if (p === "/templates") return ["more", "templates"];
-  if (p.startsWith("/tutorial")) return ["more", "tutorial"];
+  if (p.startsWith("/tutorial")) return ["more"];
   if (p === "/video-generate") return ["video-generate"];
   if (p.startsWith("/agentor") || p.startsWith("/agent")) return ["agent"];
   if (p.startsWith("/chat")) return ["chat"];
@@ -638,7 +646,6 @@ const selectedKeys = computed(() => {
 });
 
 const activeMoreFeatureKey = computed<MoreFeatureMenuKey | "">(() => {
-  if (route.path.startsWith("/tutorial")) return "tutorial";
   if (route.path === "/templates") return "templates";
   if (route.path.startsWith("/history")) return "history";
   return "";
@@ -745,7 +752,7 @@ function handleMenuClick({ key }: { key: string }) {
 }
 
 function handleMoreFeatureMenu({ key }: { key: string }) {
-  if (key === "templates" || key === "history" || key === "tutorial") {
+  if (key === "templates" || key === "history") {
     handleMenuClick({ key });
   }
 }
@@ -833,6 +840,20 @@ function handleUserMenu({ key }: { key: string }) {
     stopSystemMessagePolling();
     router.push("/");
   }
+}
+
+function openNotificationCenter(defaultTab: "feedback" | "system-messages" | "update-logs" = "update-logs") {
+  mobileDrawerOpen.value = false;
+  notificationCenterDefaultTab.value = defaultTab;
+  notificationCenterDialogOpen.value = true;
+}
+
+async function handleNotificationCenterReadStateChange() {
+  await Promise.allSettled([
+    loadNotificationCenterHighlightState(),
+    syncUserCompletedUnreadFeedbackCount(),
+    syncUserUnreadSystemMessageCount(),
+  ]);
 }
 
 async function syncAdminUnresolvedFeedbackCount(options?: { showToast?: boolean }) {
@@ -1215,6 +1236,18 @@ async function checkAnnouncement() {
   }
 }
 
+async function loadNotificationCenterHighlightState() {
+  try {
+    const updateLogRes = await listUpdateLogs(1, 1);
+    const latest = updateLogRes.items?.[0];
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 7);
+    hasRecentUpdateLog.value = !!latest?.effective_at && new Date(latest.effective_at).getTime() >= cutoff.getTime();
+  } catch {
+    hasRecentUpdateLog.value = false;
+  }
+}
+
 async function loadPaymentPlans() {
   if (!auth.isLoggedIn) return;
   purchasePlansLoading.value = true;
@@ -1446,6 +1479,7 @@ onMounted(async () => {
     })(),
     checkAnnouncement(),
     loadPaymentPlans(),
+    loadNotificationCenterHighlightState(),
   ]);
 
   if (!auth.isLoggedIn) return;
@@ -1887,36 +1921,6 @@ watch(
                     <component :is="item.icon" />
                     <span style="margin-left: 8px">{{ item.label }}</span>
                   </a-menu-item>
-                  <a-menu-divider />
-                  <a-sub-menu key="user-notice-submenu" popup-class-name="warm-dropdown">
-                    <template #icon><BellOutlined /></template>
-                    <template #title>通知中心</template>
-                    <a-menu-item
-                      v-for="item in userMenuNoticeItems"
-                      :key="item.key"
-                      class="user-feedback-dropdown-item"
-                    >
-                      <template #icon><component :is="item.icon" /></template>
-                      <span v-if="item.key === 'my-feedback'" class="user-menu-feedback-label">
-                        <span>{{ item.label }}</span>
-                        <a-badge
-                          v-if="hasUserUnreadFeedback"
-                          dot
-                          :dot-style="{ width: '10px', height: '10px', minWidth: '10px' }"
-                        />
-                      </span>
-                      <span v-else-if="item.key === 'system-messages'" class="user-menu-feedback-label">
-                        <span>{{ item.label }}</span>
-                        <a-badge
-                          v-if="hasUserUnreadSystemMessage"
-                          dot
-                          :dot-style="{ width: '10px', height: '10px', minWidth: '10px' }"
-                        />
-                      </span>
-                      <span v-else-if="item.key === 'update-logs'">{{ item.label }}</span>
-                      <span v-else>{{ item.label }}</span>
-                    </a-menu-item>
-                  </a-sub-menu>
                   <a-menu-item key="theme-style-entry" class="theme-style-menu-item">
                     <template #icon><BgColorsOutlined /></template>
                     <ThemeStyleMenuEntry :current-theme="currentTheme" />
@@ -2210,6 +2214,35 @@ watch(
       </div>
 
       <div class="canvas-side-nav-footer">
+        <button
+          type="button"
+          class="canvas-side-nav-item canvas-side-nav-action"
+          :class="{ active: selectedKeys.includes('tutorial') }"
+          title="使用教程"
+          @click="handleMenuClick({ key: 'tutorial' })"
+        >
+          <ReadOutlined />
+          <span>使用教程</span>
+        </button>
+
+        <a-badge
+          :count="notificationCenterUnreadCount"
+          :show-zero="false"
+          :overflow-count="99"
+          class="canvas-side-notice-badge"
+        >
+          <button
+            type="button"
+            class="canvas-side-nav-item canvas-side-nav-action canvas-side-notice-entry"
+            :class="{ 'is-highlight': hasNotificationCenterHighlight }"
+            title="通知中心"
+            @click="openNotificationCenter('update-logs')"
+          >
+            <BellOutlined />
+            <span>通知中心</span>
+          </button>
+        </a-badge>
+
         <button v-if="auth.isLoggedIn" type="button" class="canvas-side-credit-pill" title="兑换积分" @click="openRedeemEntry">
           <ThunderboltOutlined />
           <span>{{ auth.user?.credits ?? 0 }}</span>
@@ -2250,24 +2283,6 @@ watch(
                 <component :is="item.icon" />
                 <span style="margin-left: 8px">{{ item.label }}</span>
               </a-menu-item>
-              <a-menu-divider />
-              <a-sub-menu key="canvas-user-notice-submenu" popup-class-name="warm-dropdown">
-                <template #icon><BellOutlined /></template>
-                <template #title>通知中心</template>
-                <a-menu-item v-for="item in userMenuNoticeItems" :key="item.key" class="user-feedback-dropdown-item">
-                  <template #icon><component :is="item.icon" /></template>
-                  <span v-if="item.key === 'my-feedback'" class="user-menu-feedback-label">
-                    <span>{{ item.label }}</span>
-                    <a-badge v-if="hasUserUnreadFeedback" dot :dot-style="{ width: '10px', height: '10px', minWidth: '10px' }" />
-                  </span>
-                  <span v-else-if="item.key === 'system-messages'" class="user-menu-feedback-label">
-                    <span>{{ item.label }}</span>
-                    <a-badge v-if="hasUserUnreadSystemMessage" dot :dot-style="{ width: '10px', height: '10px', minWidth: '10px' }" />
-                  </span>
-                  <span v-else-if="item.key === 'update-logs'">{{ item.label }}</span>
-                  <span v-else>{{ item.label }}</span>
-                </a-menu-item>
-              </a-sub-menu>
               <a-menu-item key="theme-style-entry" class="theme-style-menu-item">
                 <template #icon><BgColorsOutlined /></template>
                 <ThemeStyleMenuEntry :current-theme="currentTheme" />
@@ -2545,35 +2560,6 @@ watch(
                 <component :is="item.icon" />
                 <span>{{ item.label }}</span>
               </a-menu-item>
-              <a-menu-divider />
-              <a-sub-menu key="mobile-user-notice-submenu">
-                <template #icon><BellOutlined /></template>
-                <template #title>通知中心</template>
-                <a-menu-item
-                  v-for="item in userMenuNoticeItems"
-                  :key="item.key"
-                >
-                  <template #icon><component :is="item.icon" /></template>
-                  <span v-if="item.key === 'my-feedback'" class="user-menu-feedback-label">
-                    <span>{{ item.label }}</span>
-                    <a-badge
-                      v-if="hasUserUnreadFeedback"
-                      dot
-                      :dot-style="{ width: '10px', height: '10px', minWidth: '10px' }"
-                    />
-                  </span>
-                  <span v-else-if="item.key === 'system-messages'" class="user-menu-feedback-label">
-                    <span>{{ item.label }}</span>
-                    <a-badge
-                      v-if="hasUserUnreadSystemMessage"
-                      dot
-                      :dot-style="{ width: '10px', height: '10px', minWidth: '10px' }"
-                    />
-                  </span>
-                  <span v-else-if="item.key === 'update-logs'">{{ item.label }}</span>
-                  <span v-else>{{ item.label }}</span>
-                </a-menu-item>
-              </a-sub-menu>
               <a-sub-menu key="mobile-user-theme-submenu">
                 <template #icon><BgColorsOutlined /></template>
                 <template #title>主题风格</template>
@@ -2661,6 +2647,7 @@ watch(
       v-if="notificationCenterDialogOpen"
       v-model:open="notificationCenterDialogOpen"
       :default-tab="notificationCenterDefaultTab"
+      @read-state-change="handleNotificationCenterReadStateChange"
     />
 
     <a-modal
@@ -3282,6 +3269,20 @@ watch(
   background: var(--theme-nav-hover-bg);
   color: var(--theme-accent-text-hover);
   transform: translateY(-1px);
+}
+
+.canvas-side-notice-entry {
+  min-height: 42px;
+  height: 42px;
+}
+
+.canvas-side-notice-entry.is-highlight {
+  color: var(--theme-accent-text);
+  background: var(--theme-nav-hover-bg);
+}
+
+.canvas-side-notice-badge :deep(.ant-badge-count) {
+  box-shadow: 0 0 0 2px var(--theme-panel-bg);
 }
 
 .canvas-side-user-trigger {

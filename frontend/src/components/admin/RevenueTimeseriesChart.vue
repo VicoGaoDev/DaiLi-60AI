@@ -34,15 +34,15 @@ const channelMeta = computed(() => {
   }
   if (channel.value === "redeem") {
     return {
-      title: "每日兑换码收入",
-      desc: "按所选月份逐日对比兑换码金额。",
-      badge: "兑换码",
+      title: "每日代理积分池收入",
+      desc: "按所选月份逐日对比代理积分池分配金额。",
+      badge: "代理积分池",
       total: Number(data.value?.total_redeem_amount || 0),
     };
   }
   return {
     title: "每日总收入",
-    desc: "按所选月份逐日对比在线购买、兑换码和线下订单收入。",
+    desc: "按所选月份逐日对比在线购买、代理积分池和线下订单收入。",
     badge: "总收入",
     total: Number(data.value?.total_amount || 0),
   };
@@ -80,7 +80,7 @@ function topStackKey(item: { online_amount: number; redeem_amount: number; offli
 
 function channelFromLegend(name?: string): RevenueChannel | null {
   if (name === "在线购买") return "online";
-  if (name === "兑换码") return "redeem";
+  if (name === "代理积分池") return "redeem";
   if (name === "线下订单") return "total";
   return null;
 }
@@ -135,7 +135,7 @@ const chartOption = computed(() => {
   };
   const legendSelected = {
     在线购买: channel.value === "total" || channel.value === "online",
-    兑换码: channel.value === "total" || channel.value === "redeem",
+    代理积分池: channel.value === "total" || channel.value === "redeem",
     线下订单: channel.value === "total",
   };
 
@@ -151,7 +151,7 @@ const chartOption = computed(() => {
         const offlineAmount = Number(point?.offline_amount || 0);
         const rows = [
           { name: "在线购买", value: Number(point?.online_amount || 0), marker: params.find((item) => item.seriesName === "在线购买")?.marker, visible: channel.value === "total" || channel.value === "online" },
-          { name: "兑换码", value: Number(point?.redeem_amount || 0), marker: params.find((item) => item.seriesName === "兑换码")?.marker, visible: channel.value === "total" || channel.value === "redeem" },
+          { name: "代理积分池", value: Number(point?.redeem_amount || 0), marker: params.find((item) => item.seriesName === "代理积分池")?.marker, visible: channel.value === "total" || channel.value === "redeem" },
           { name: "线下订单", value: offlineAmount, marker: params.find((item) => item.seriesName === "线下订单")?.marker, visible: channel.value === "total" },
         ].filter((item) => item.visible);
         const total = channel.value === "online"
@@ -168,7 +168,7 @@ const chartOption = computed(() => {
     },
     legend: {
       top: 0,
-      data: ["在线购买", "兑换码", "线下订单"],
+      data: ["在线购买", "代理积分池", "线下订单"],
       selected: legendSelected,
     },
     grid: { left: 56, right: 20, top: 56, bottom: 28 },
@@ -196,7 +196,7 @@ const chartOption = computed(() => {
         })) || [],
       },
       {
-        name: "兑换码",
+        name: "代理积分池",
         type: "bar",
         stack: "revenue",
         data: data.value?.points.map((item, index) => ({
@@ -272,7 +272,7 @@ const chartOption = computed(() => {
           >
             <a-radio-button value="total">总收入</a-radio-button>
             <a-radio-button value="online">在线购买</a-radio-button>
-            <a-radio-button value="redeem">兑换码</a-radio-button>
+            <a-radio-button value="redeem">代理积分池</a-radio-button>
           </a-radio-group>
           <div class="revenue-chart-summary">
             <span>{{ channelMeta.badge }}</span>

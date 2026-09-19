@@ -89,6 +89,10 @@ TASK_CREDIT_REFUND_DESCRIPTIONS = (
     TASK_FAILURE_REFUND_DESCRIPTION,
 )
 
+USER_ROLE_FILTERS = {"user", "admin", "agent"}
+OFFLINE_ORDER_SOURCE_MANUAL = "manual"
+OFFLINE_ORDER_SOURCE_AGENT_POOL = "agent_pool_allocate"
+
 
 def _non_whitelisted_user_filter():
     return User.is_whitelisted.is_(False)
@@ -298,6 +302,7 @@ def list_users(
     page_size: int = 30,
     keyword: str | None = None,
     status_filter: str | None = None,
+    role_filter: str | None = None,
     whitelist: bool | None = None,
     sort: str = "created_at_desc",
 ) -> dict:
@@ -305,6 +310,7 @@ def list_users(
     normalized_page_size = max(1, min(int(page_size or 30), 100))
     normalized_keyword = (keyword or "").strip()
     normalized_status = (status_filter or "").strip()
+    normalized_role = (role_filter or "").strip()
     normalized_sort = (sort or "created_at_desc").strip()
 
     query = db.query(User).filter(User.role != "superadmin")
@@ -318,6 +324,8 @@ def list_users(
         ))
     if normalized_status in {"active", "disabled"}:
         query = query.filter(User.status == normalized_status)
+    if normalized_role in USER_ROLE_FILTERS:
+        query = query.filter(User.role == normalized_role)
     if whitelist is not None:
         query = query.filter(User.is_whitelisted.is_(bool(whitelist)))
 
@@ -625,11 +633,13 @@ def _serialize_offline_order(order: OfflineOrder, user: User | None, creator: Us
         "username": user.username if user else "",
         "user_email": (user.email or "") if user else "",
         "order_type": order.order_type or "purchase",
+        "source": order.source or OFFLINE_ORDER_SOURCE_MANUAL,
         "credit_amount": int(order.credit_amount or 0),
         "amount_fen": amount_fen,
         "amount_yuan": round(amount_fen / 100, 2),
         "remark": order.remark or "",
         "created_by": user_external_id(creator) if creator else "",
+        "created_by_username": creator.username if creator else "",
         "created_at": order.created_at,
         "updated_at": order.updated_at,
     }
@@ -726,13 +736,24 @@ def reset_user_password(db: Session, user_id: str, new_password: str, operator: 
     return _serialize_user(user)
 
 
-def allocate_credits(db: Session, user_id: str, amount: int, description: str, operator: User) -> dict:
+def allocate_credits(
+    db: Session,
+    user_id: str,
+    amount: int,
+    description: str,
+    operator: User,
+    amount_yuan: Decimal | int | float | str | None = None,
+) -> dict:
     if amount == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="积分数量不能为 0")
     user = get_user_by_business_id(db, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
     credit_type = AGENT_POOL_CREDIT_TYPE if user.role == "agent" else DEFAULT_CREDIT_TYPE
+    if user.role == "agent" and amount > 0 and amount_yuan is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="给代理人分配代理积分池时必须填写金额")
+    if user.role == "agent" and amount <= 0 and amount_yuan is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="扣减代理积分池时无需填写金额")
     before_remain_credit, before_used_credit = _credit_snapshot(db, user.id, credit_type=credit_type)
     if user.role == "agent" and amount < 0:
         assert_agent_pool_covers_unused(
@@ -749,20 +770,36 @@ def allocate_credits(db: Session, user_id: str, amount: int, description: str, o
         operator_id=operator.id,
         credit_type=credit_type,
     )
+    if user.role == "agent" and amount > 0 and amount_yuan is not None:
+        db.add(
+            OfflineOrder(
+                user_id=user.id,
+                order_type="purchase",
+                source=OFFLINE_ORDER_SOURCE_AGENT_POOL,
+                credit_amount=int(amount),
+                amount_fen=_money_to_fen(amount_yuan, allow_zero=False),
+                remark=(description or "").strip(),
+                created_by=operator.id,
+            )
+        )
     db.commit()
     db.refresh(user)
     after_remain_credit, after_used_credit = _credit_snapshot(db, user.id, credit_type=credit_type)
+    detail_lines = [
+        f"> ⚡ 本次积分变更: **{amount:+d}**",
+        f"> ⚡ 剩余积分: **{before_remain_credit} -> {after_remain_credit}**",
+        f"> ⚡ 已使用积分: **{before_used_credit} -> {after_used_credit}**",
+    ]
+    if user.role == "agent" and amount > 0 and amount_yuan is not None:
+        money_display = Decimal(str(amount_yuan)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        detail_lines.append(f"> 💰 本次金额: **¥{money_display}**")
+    detail_lines.append(f"> 📝 备注: {description.strip() if (description or '').strip() else '-'}")
     _send_user_admin_action_notification(
         db,
         operator=operator,
         target_user=user,
         action_type="分配积分" if amount > 0 else "扣减积分",
-        detail_lines=[
-            f"> ⚡ 本次积分变更: **{amount:+d}**",
-            f"> ⚡ 剩余积分: **{before_remain_credit} -> {after_remain_credit}**",
-            f"> ⚡ 已使用积分: **{before_used_credit} -> {after_used_credit}**",
-            f"> 📝 备注: {description.strip() if (description or '').strip() else '-'}",
-        ],
+        detail_lines=detail_lines,
     )
     return _serialize_user(user)
 
@@ -828,6 +865,7 @@ def create_offline_order(
     order = OfflineOrder(
         user_id=user.id,
         order_type=order_type,
+        source=OFFLINE_ORDER_SOURCE_MANUAL,
         credit_amount=int(credit_amount),
         amount_fen=_yuan_to_fen(amount_yuan),
         remark=(remark or "").strip(),
@@ -845,6 +883,7 @@ def list_offline_orders(
     page: int = 1,
     page_size: int = 20,
     user_keyword: str | None = None,
+    source: str | None = None,
     start_date: datetime | None = None,
     end_date: datetime | None = None,
 ) -> dict:
@@ -856,6 +895,7 @@ def list_offline_orders(
     )
 
     keyword = (user_keyword or "").strip()
+    normalized_source = (source or "").strip()
     if keyword:
         like = f"%{keyword}%"
         query = query.filter(
@@ -864,6 +904,8 @@ def list_offline_orders(
             | (User.business_id.ilike(like))
             | (OfflineOrder.business_id.ilike(like))
         )
+    if normalized_source in {OFFLINE_ORDER_SOURCE_MANUAL, OFFLINE_ORDER_SOURCE_AGENT_POOL}:
+        query = query.filter(OfflineOrder.source == normalized_source)
     if start_date:
         query = query.filter(OfflineOrder.created_at >= start_date)
     if end_date:
@@ -3027,23 +3069,6 @@ def get_video_analytics_breakdown(
     }
 
 
-REDEEM_UNIT_PRICES: dict[int, float] = {
-    30: 1.45,
-    50: 3.50,
-    70: 2.00,
-    100: 5.00,
-    300: 18.50,
-    500: 34.00,
-    501: 32.00,
-    1000: 65.00,
-    1001: 58.00,
-    2000: 120.00,
-    2001: 112.00,
-    6000: 300.00,
-    10000: 500.00,
-}
-
-
 def get_analytics_redeem_revenue(
     db: Session,
     *,
@@ -3055,49 +3080,48 @@ def get_analytics_redeem_revenue(
 
     rows = (
         db.query(
-            CreditRedeemKey.credit_amount,
-            func.count(CreditRedeemKey.id).label("used_count"),
+            OfflineOrder.order_type,
+            OfflineOrder.credit_amount,
+            OfflineOrder.amount_fen,
+            func.count(OfflineOrder.id).label("order_count"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (OfflineOrder.order_type == "refund", -OfflineOrder.amount_fen),
+                        else_=OfflineOrder.amount_fen,
+                    )
+                ),
+                0,
+            ).label("net_amount_fen"),
         )
         .filter(
-            CreditRedeemKey.used_at.isnot(None),
-            CreditRedeemKey.used_at >= current_start,
-            CreditRedeemKey.used_at <= current_end,
+            OfflineOrder.source == OFFLINE_ORDER_SOURCE_AGENT_POOL,
+            OfflineOrder.created_at >= _to_db_datetime(current_start),
+            OfflineOrder.created_at <= _to_db_datetime(current_end),
         )
-        .group_by(CreditRedeemKey.credit_amount)
+        .group_by(OfflineOrder.order_type, OfflineOrder.credit_amount, OfflineOrder.amount_fen)
+        .order_by(OfflineOrder.amount_fen.asc(), OfflineOrder.credit_amount.asc(), OfflineOrder.order_type.asc())
         .all()
     )
-    count_map = {int(row.credit_amount): int(row.used_count) for row in rows}
 
     items: list[dict] = []
     total_used_count = 0
     total_amount = 0.0
 
-    for credit_amount in sorted(REDEEM_UNIT_PRICES):
-        used_count = count_map.pop(credit_amount, 0)
-        unit_price = REDEEM_UNIT_PRICES[credit_amount]
-        subtotal = round(used_count * unit_price, 2)
+    for row in rows:
+        order_count = int(row.order_count or 0)
+        signed_unit_price = round(int(row.amount_fen or 0) / 100, 2)
+        total_amount_yuan = round(int(row.net_amount_fen or 0) / 100, 2)
         items.append(
             {
-                "credit_amount": credit_amount,
-                "unit_price": unit_price,
-                "used_count": used_count,
-                "total_amount": subtotal,
+                "credit_amount": int(row.credit_amount or 0),
+                "unit_price": -signed_unit_price if row.order_type == "refund" else signed_unit_price,
+                "used_count": order_count,
+                "total_amount": total_amount_yuan,
             }
         )
-        total_used_count += used_count
-        total_amount += subtotal
-
-    for credit_amount in sorted(count_map):
-        used_count = count_map[credit_amount]
-        items.append(
-            {
-                "credit_amount": credit_amount,
-                "unit_price": 0.0,
-                "used_count": used_count,
-                "total_amount": 0.0,
-            }
-        )
-        total_used_count += used_count
+        total_used_count += order_count
+        total_amount += total_amount_yuan
 
     return {
         "range_label": _format_range_label(current_start, current_end),
@@ -3185,6 +3209,7 @@ def get_analytics_offline_order_revenue(
             ).label("net_amount_fen"),
         )
         .filter(
+            OfflineOrder.source == OFFLINE_ORDER_SOURCE_MANUAL,
             OfflineOrder.created_at >= _to_db_datetime(current_start),
             OfflineOrder.created_at <= _to_db_datetime(current_end),
         )
@@ -3217,10 +3242,6 @@ def get_analytics_offline_order_revenue(
         "total_used_count": total_used_count,
         "total_amount": round(total_amount, 2),
     }
-
-
-def _redeem_amount_yuan(credit_amount: int) -> float:
-    return float(REDEEM_UNIT_PRICES.get(int(credit_amount or 0), 0.0))
 
 
 def get_analytics_revenue_timeseries(
@@ -3264,25 +3285,29 @@ def get_analytics_revenue_timeseries(
         bucket_map[bucket]["online_amount"] += int(amount_fen or 0) / 100
 
     redeem_rows = (
-        db.query(CreditRedeemKey.used_at, CreditRedeemKey.credit_amount)
+        db.query(OfflineOrder.created_at, OfflineOrder.order_type, OfflineOrder.amount_fen)
         .filter(
-            CreditRedeemKey.used_at.isnot(None),
-            CreditRedeemKey.used_at >= current_start,
-            CreditRedeemKey.used_at <= current_end,
+            OfflineOrder.source == OFFLINE_ORDER_SOURCE_AGENT_POOL,
+            OfflineOrder.created_at >= _to_db_datetime(current_start),
+            OfflineOrder.created_at <= _to_db_datetime(current_end),
         )
         .all()
     )
-    for used_at, credit_amount in redeem_rows:
-        if used_at is None:
+    for created_at, order_type, amount_fen in redeem_rows:
+        if created_at is None:
             continue
-        bucket = _bucket_start(_to_local_datetime(used_at), granularity)
+        bucket = _bucket_start(_to_local_datetime(created_at), granularity)
         if bucket not in bucket_map:
             continue
-        bucket_map[bucket]["redeem_amount"] += _redeem_amount_yuan(int(credit_amount or 0))
+        signed_amount = int(amount_fen or 0) / 100
+        if order_type == "refund":
+            signed_amount = -signed_amount
+        bucket_map[bucket]["redeem_amount"] += signed_amount
 
     offline_rows = (
         db.query(OfflineOrder.created_at, OfflineOrder.order_type, OfflineOrder.amount_fen)
         .filter(
+            OfflineOrder.source == OFFLINE_ORDER_SOURCE_MANUAL,
             OfflineOrder.created_at >= _to_db_datetime(current_start),
             OfflineOrder.created_at <= _to_db_datetime(current_end),
         )

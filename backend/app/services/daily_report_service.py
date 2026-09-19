@@ -7,13 +7,12 @@ from datetime import datetime, timedelta
 from sqlalchemy import case, func, or_
 from sqlalchemy.orm import Session
 
-from app.models.credit_redeem_key import CreditRedeemKey
 from app.models.credit_log import CreditLog
 from app.models.offline_order import OfflineOrder
 from app.models.payment_order import PaymentOrder
 from app.models.task import Task
 from app.services.payment_service import parse_alipay_payment_time
-from app.services.admin_service import REDEEM_UNIT_PRICES
+from app.services.admin_service import OFFLINE_ORDER_SOURCE_AGENT_POOL, OFFLINE_ORDER_SOURCE_MANUAL
 from app.utils.datetime_utils import now_local, to_local_naive
 from app.services.wecom_notify_service import is_wecom_notify_enabled, send_wecom_markdown
 
@@ -123,6 +122,7 @@ def collect_daily_report_stats(
             func.count(OfflineOrder.id),
         )
         .filter(
+            OfflineOrder.source == OFFLINE_ORDER_SOURCE_MANUAL,
             OfflineOrder.created_at >= start_at,
             OfflineOrder.created_at < end_at,
         )
@@ -131,24 +131,26 @@ def collect_daily_report_stats(
 
     redeem_rows = (
         db.query(
-            CreditRedeemKey.credit_amount,
-            func.count(CreditRedeemKey.id).label("used_count"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (OfflineOrder.order_type == "refund", -OfflineOrder.amount_fen),
+                        else_=OfflineOrder.amount_fen,
+                    )
+                ),
+                0,
+            ).label("revenue_fen"),
+            func.count(OfflineOrder.id).label("used_count"),
         )
         .filter(
-            CreditRedeemKey.used_at.is_not(None),
-            CreditRedeemKey.used_at >= start_at,
-            CreditRedeemKey.used_at < end_at,
+            OfflineOrder.source == OFFLINE_ORDER_SOURCE_AGENT_POOL,
+            OfflineOrder.created_at >= start_at,
+            OfflineOrder.created_at < end_at,
         )
-        .group_by(CreditRedeemKey.credit_amount)
-        .all()
+        .one()
     )
-    redeem_revenue_yuan = 0.0
-    redeem_used_count = 0
-    for row in redeem_rows:
-        credit_amount = int(row.credit_amount or 0)
-        used_count = int(row.used_count or 0)
-        redeem_used_count += used_count
-        redeem_revenue_yuan += used_count * float(REDEEM_UNIT_PRICES.get(credit_amount, 0.0))
+    redeem_revenue_yuan = round(int(redeem_rows.revenue_fen or 0) / 100, 2)
+    redeem_used_count = int(redeem_rows.used_count or 0)
 
     task_total_count, task_success_count, task_failed_count = (
         db.query(
@@ -206,8 +208,8 @@ def build_daily_report_markdown(stats: DailyReportStats) -> str:
         f"> ✅ 支付成功订单数: **{stats.paid_order_count}**\n"
         f"> 🧾 线下订单营业额: <font color=\"warning\">¥{offline_order_revenue_yuan}</font>\n"
         f"> 📝 线下订单录入数: **{stats.offline_order_count}**\n"
-        f"> 🎟️ 兑换码营业额: <font color=\"warning\">¥{stats.redeem_revenue_yuan:.2f}</font>\n"
-        f"> 🔑 兑换码使用次数: **{stats.redeem_used_count}**\n"
+        f"> 🧑‍💼 代理积分池营业额: <font color=\"warning\">¥{stats.redeem_revenue_yuan:.2f}</font>\n"
+        f"> 🔑 代理积分池分配笔数: **{stats.redeem_used_count}**\n"
         f"> 🖼️ 任务总数: **{stats.task_total_count}**\n"
         f"> 🟢 成功任务数: **{stats.task_success_count}**\n"
         f"> 🔴 失败任务数: **{stats.task_failed_count}**\n"

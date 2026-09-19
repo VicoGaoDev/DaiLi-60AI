@@ -391,7 +391,7 @@ onMounted(loadLedger);
               <div class="metric-value">{{ formatMoney(income.online_revenue_yuan) }}</div>
             </div>
             <div class="metric-card">
-              <div class="metric-label">淘宝兑换码营业额</div>
+              <div class="metric-label">代理积分池营业额</div>
               <div class="metric-value">{{ formatMoney(income.redeem_revenue_yuan) }}</div>
             </div>
             <div class="metric-card">

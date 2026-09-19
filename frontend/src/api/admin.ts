@@ -117,6 +117,7 @@ export function listUsers(
   filters?: {
     keyword?: string;
     status?: "active" | "disabled";
+    role?: "user" | "admin" | "agent";
     whitelist?: boolean;
     sort?: "created_at_desc" | "credits_desc" | "consumed_credits_desc";
   }
@@ -127,6 +128,7 @@ export function listUsers(
       page_size: pageSize,
       keyword: filters?.keyword?.trim() || undefined,
       status: filters?.status || undefined,
+      role: filters?.role || undefined,
       whitelist: typeof filters?.whitelist === "boolean" ? filters.whitelist : undefined,
       sort: filters?.sort || "created_at_desc",
     },
@@ -204,8 +206,17 @@ export function resetUserPassword(userId: string, newPassword: string): Promise<
   return client.put(`/admin/users/${userId}/reset-password`, { new_password: newPassword });
 }
 
-export function allocateCredits(userId: string, amount: number, description?: string): Promise<AdminUser> {
-  return client.post(`/admin/users/${userId}/credits`, { amount, description: description || "" });
+export function allocateCredits(
+  userId: string,
+  amount: number,
+  description?: string,
+  amountYuan?: number,
+): Promise<AdminUser> {
+  return client.post(`/admin/users/${userId}/credits`, {
+    amount,
+    description: description || "",
+    amount_yuan: amountYuan,
+  });
 }
 
 export function resetUserCredits(userId: string, description?: string): Promise<AdminUser> {
@@ -253,6 +264,7 @@ export function listOfflineOrders(params: {
   page?: number;
   page_size?: number;
   user?: string;
+  source?: "manual" | "agent_pool_allocate";
   start_date?: string;
   end_date?: string;
 }): Promise<{ total: number; items: AdminOfflineOrder[] }> {

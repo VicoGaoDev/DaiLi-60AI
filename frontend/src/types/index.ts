@@ -1469,11 +1469,13 @@ export interface AdminOfflineOrder {
   username: string;
   user_email: string;
   order_type: "purchase" | "refund";
+  source: "manual" | "agent_pool_allocate";
   credit_amount: number;
   amount_fen: number;
   amount_yuan: number;
   remark: string;
   created_by: string;
+  created_by_username: string;
   created_at?: string | null;
   updated_at?: string | null;
 }

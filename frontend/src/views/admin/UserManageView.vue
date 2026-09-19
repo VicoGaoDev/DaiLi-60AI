@@ -45,7 +45,7 @@ const resetForm = reactive({ newPassword: "" });
 const creditsOpen = ref(false);
 const creditsLoading = ref(false);
 const creditsTarget = ref<AdminUser | null>(null);
-const creditsForm = reactive({ amount: 0, description: "" });
+const creditsForm = reactive({ amount: 0, amount_yuan: undefined as number | undefined, description: "" });
 const whitelistOpen = ref(false);
 const whitelistKeyword = ref("");
 const whitelistLoadingId = ref<string | null>(null);
@@ -234,6 +234,7 @@ async function handleResetPwd() {
 function openCredits(u: AdminUser) {
   creditsTarget.value = u;
   creditsForm.amount = 0;
+  creditsForm.amount_yuan = undefined;
   creditsForm.description = "";
   creditsOpen.value = true;
 }
@@ -253,13 +254,22 @@ async function handleAllocateCredits() {
     message.warning("请输入有效的积分数量");
     return;
   }
+  if (creditsTarget.value.role === "agent" && creditsForm.amount > 0 && (!creditsForm.amount_yuan || creditsForm.amount_yuan <= 0)) {
+    message.warning("给代理人分配代理积分池时请填写金额");
+    return;
+  }
   if (!creditsForm.description.trim()) {
     message.warning("请填写备注说明");
     return;
   }
   creditsLoading.value = true;
   try {
-    await allocateCredits(creditsTarget.value.id, creditsForm.amount, creditsForm.description.trim());
+    await allocateCredits(
+      creditsTarget.value.id,
+      creditsForm.amount,
+      creditsForm.description.trim(),
+      creditsTarget.value.role === "agent" && creditsForm.amount > 0 ? creditsForm.amount_yuan : undefined,
+    );
     message.success("积分分配成功");
     creditsOpen.value = false;
     await Promise.all([
@@ -668,6 +678,18 @@ function promoActivityRowKey(record: {
       <a-form layout="vertical" style="margin-top: 16px">
         <a-form-item :label="`${creditsTarget?.role === 'agent' ? '代理积分池' : '积分'}数量（正数充值，负数扣减）`">
           <a-input-number v-model:value="creditsForm.amount" class="warm-input-number" placeholder="请输入积分数量" />
+        </a-form-item>
+        <a-form-item
+          v-if="creditsTarget?.role === 'agent' && creditsForm.amount > 0"
+          label="金额（人民币元）"
+        >
+          <a-input-number
+            v-model:value="creditsForm.amount_yuan"
+            class="warm-input-number"
+            placeholder="请输入本次代理池分配金额"
+            :min="0.01"
+            :precision="2"
+          />
         </a-form-item>
         <a-form-item label="备注说明" style="margin-bottom: 0">
           <a-input v-model:value="creditsForm.description" class="warm-input" placeholder="请输入备注说明" />

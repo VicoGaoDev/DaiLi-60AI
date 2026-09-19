@@ -18,7 +18,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: "兑换码营业额",
+    default: "营业额明细",
   },
   countLabel: {
     type: String,
@@ -27,9 +27,9 @@ const props = defineProps({
 });
 
 const columns = [
-  { title: "积分面值", dataIndex: "credit_amount", width: 120 },
-  { title: "售价（元）", dataIndex: "unit_price", width: 120 },
-  { title: "兑换个数", dataIndex: "used_count", width: 120 },
+  { title: "积分数量", dataIndex: "credit_amount", width: 120 },
+  { title: "单价（元）", dataIndex: "unit_price", width: 120 },
+  { title: "次数", dataIndex: "used_count", width: 120 },
   { title: "总金额（元）", dataIndex: "total_amount", width: 140 },
 ];
 
@@ -40,7 +40,7 @@ function formatMoney(value: number) {
 }
 
 function rowKey(record: AdminAnalyticsRedeemRevenueItem) {
-  return String(record.credit_amount);
+  return `${record.credit_amount}-${record.unit_price}-${record.used_count}-${record.total_amount}`;
 }
 </script>
 

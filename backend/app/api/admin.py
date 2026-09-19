@@ -122,6 +122,7 @@ def admin_list_users(
     page_size: int = Query(30, ge=1, le=100),
     keyword: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    role: Optional[str] = Query(None, pattern="^(user|admin|agent)$"),
     whitelist: Optional[bool] = Query(None),
     sort: str = Query("created_at_desc"),
     _user: User = Depends(require_admin),
@@ -133,6 +134,7 @@ def admin_list_users(
         page_size=page_size,
         keyword=keyword,
         status_filter=status,
+        role_filter=role,
         whitelist=whitelist,
         sort=sort,
     )
@@ -276,7 +278,7 @@ def admin_allocate_credits(
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    return allocate_credits(db, user_id, body.amount, body.description, admin)
+    return allocate_credits(db, user_id, body.amount, body.description, admin, amount_yuan=body.amount_yuan)
 
 
 @router.post("/users/{user_id}/credits/reset", response_model=UserOut)
@@ -423,6 +425,7 @@ def admin_offline_orders(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     user: Optional[str] = Query(None),
+    source: Optional[str] = Query(None, pattern="^(manual|agent_pool_allocate)$"),
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
     _user: User = Depends(require_admin),
@@ -433,6 +436,7 @@ def admin_offline_orders(
         page=page,
         page_size=page_size,
         user_keyword=user,
+        source=source,
         start_date=start_date,
         end_date=end_date,
     )

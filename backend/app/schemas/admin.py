@@ -41,6 +41,7 @@ class AdminUserListOut(BaseModel):
 class AllocateCreditsRequest(BaseModel):
     amount: int
     description: str = ""
+    amount_yuan: Decimal | None = Field(default=None, gt=0)
 
 
 class ResetCreditsRequest(BaseModel):
@@ -137,11 +138,13 @@ class OfflineOrderOut(BaseModel):
     username: str = ""
     user_email: str = ""
     order_type: str
+    source: str = "manual"
     credit_amount: int
     amount_fen: int
     amount_yuan: float
     remark: str = ""
     created_by: str
+    created_by_username: str = ""
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

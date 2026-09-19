@@ -328,7 +328,15 @@ def update_agent_redeem_key_status(db: Session, *, agent: User, key_id: int, new
     if row.used_at:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="已使用兑换码不允许修改状态")
     if row.status != REDEEM_KEY_STATUS_ENABLED and new_status == REDEEM_KEY_STATUS_ENABLED:
-        assert_agent_pool_covers_unused(db, agent, extra=int(row.credit_amount or 0), exclude_key_id=row.id)
+        pool = get_user_credit_account(db, agent.id, credit_type=AGENT_POOL_CREDIT_TYPE, for_update=True)
+        pool_remain = int(pool.remain_credit or 0) if pool else 0
+        assert_agent_pool_covers_unused(
+            db,
+            agent,
+            extra=int(row.credit_amount or 0),
+            pool_remain_override=pool_remain,
+            exclude_key_id=row.id,
+        )
     row.status = new_status
     db.add(row)
     db.commit()

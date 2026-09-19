@@ -129,8 +129,8 @@ function showDailyReportResult(result: AdminDailyReportTestResult, title = "报�
       h("p", null, `支付成功订单数：${result.paid_order_count}`),
       h("p", null, `线下订单营业额：¥${Number(result.offline_order_revenue_yuan || 0).toFixed(2)}`),
       h("p", null, `线下订单录入数：${result.offline_order_count}`),
-      h("p", null, `兑换码营业额：¥${Number(result.redeem_revenue_yuan || 0).toFixed(2)}`),
-      h("p", null, `兑换码使用次数：${result.redeem_used_count}`),
+      h("p", null, `代理积分池营业额：¥${Number(result.redeem_revenue_yuan || 0).toFixed(2)}`),
+      h("p", null, `代理积分池分配笔数：${result.redeem_used_count}`),
       h("p", null, `任务总数：${result.task_total_count}`),
       h("p", null, `成功任务数：${result.task_success_count}`),
       h("p", null, `失败任务数：${result.task_failed_count}`),
@@ -214,6 +214,7 @@ async function load() {
       listOfflineOrders({
         page: 1,
         page_size: 100,
+        source: "manual",
         start_date: formatQueryDate(dateRange.value[0].startOf("day")),
         end_date: formatQueryDate(dateRange.value[1].endOf("day")),
       }),
@@ -325,7 +326,7 @@ onMounted(() => {
         </div>
         <div>
           <div class="warm-page-title">营业额</div>
-          <div class="warm-page-desc">统计在线购买与积分兑换码营业额，支持按日期区间或月份筛选；每日收入图按月对比，不受顶部日期影响。</div>
+          <div class="warm-page-desc">统计在线购买、代理积分池分配和线下订单营业额，支持按日期区间或月份筛选；每日收入图按月对比，不受顶部日期影响。</div>
         </div>
       </div>
       <a-button
@@ -417,17 +418,17 @@ onMounted(() => {
       <RedeemRevenueTable
         :data="redeemRevenue"
         :loading="loading"
-        title="兑换码营业额"
-        count-label="兑换"
+        title="代理积分池营业额"
+        count-label="分配"
       >
         <template #footer-extra>
           <a-button
             type="primary"
             class="warm-primary-btn"
-            @click="router.push({ path: '/admin/redeem-keys', query: { preset: 'today', is_used: 'true' } })"
+            @click="router.push('/admin/agents')"
           >
             <template #icon><UnorderedListOutlined /></template>
-            兑换码详情
+            代理分配详情
           </a-button>
         </template>
       </RedeemRevenueTable>

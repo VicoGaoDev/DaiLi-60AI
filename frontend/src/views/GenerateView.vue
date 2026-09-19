@@ -77,7 +77,6 @@ import SketchBoardIcon from "@/components/icons/SketchBoardIcon.vue";
 import PromptInterceptionTip from "@/components/generate/PromptInterceptionTip.vue";
 import ImageSourceActionSheet from "@/components/generate/ImageSourceActionSheet.vue";
 import SmartCutoutPanel from "@/components/generate/SmartCutoutPanel.vue";
-import UpdateLogEntryButton from "@/components/update-log/UpdateLogEntryButton.vue";
 import { useImageSourcePicker } from "@/composables/useImageSourcePicker";
 import { appendTransientImageNonce, useTransientImageLoad } from "@/composables/useTransientImageLoad";
 import { useUserAssets } from "@/composables/useUserAssets";
@@ -5945,7 +5944,6 @@ watch(() => auth.isLoggedIn, async (isLoggedIn) => {
                 </div>
               </template>
             </a-popover>
-            <UpdateLogEntryButton />
             <a-popover
               v-model:open="generatedTaskFilterOpen"
               trigger="click"
