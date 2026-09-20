@@ -19,6 +19,8 @@ from app.services.referral_reward_service import (
 from app.services.business_id_service import user_external_id
 from app.services.user_credit_service import change_user_credit_balance
 from app.services.username_service import ensure_username_available, generate_phone_username, normalize_username
+from app.services.wecom_notify_service import dispatch_wecom_event, format_wecom_user_label
+from app.utils.datetime_utils import now_local
 from app.utils.security import create_access_token, hash_password, verify_password
 
 EMAIL_REGEX = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
@@ -351,6 +353,24 @@ async def register_user(
     )
     db.commit()
     db.refresh(user)
+    user_label = format_wecom_user_label(user)
+    register_method = "手机号" if normalized_phone else "邮箱"
+    has_invite = "是" if referrer_id else "否"
+    time_text = now_local().strftime("%Y-%m-%d %H:%M:%S")
+    dispatch_wecom_event(
+        "user_registered",
+        "## 👤 新用户注册\n"
+        f"> 👤 用户: **{user_label}**\n"
+        f"> 🏷️ 方式: **{register_method}**\n"
+        f"> 🔗 邀请: **{has_invite}**\n"
+        f"> ⏰ 时间: {time_text}",
+        {
+            "user_label": user_label,
+            "register_method": register_method,
+            "has_invite": has_invite,
+            "time": time_text,
+        },
+    )
     token = create_access_token(user_external_id(user), user.role)
     return token, user
 

@@ -21,11 +21,15 @@ def format_wecom_user_label(user: User | None, *, fallback_id: int | None = None
 
 
 def is_wecom_notify_enabled() -> bool:
-    return bool(settings.WECOM_NOTIFY_ENABLED and (settings.WECOM_WEBHOOK_URL or "").strip())
+    from app.services.wecom_channel_service import EVENT_DAILY_REPORT, event_channel_enabled
+
+    return event_channel_enabled(EVENT_DAILY_REPORT)
 
 
 def is_wecom_alert_enabled() -> bool:
-    return bool(settings.API_ALERT_ENABLED and (settings.WECOM_ALERT_WEBHOOK_URL or "").strip())
+    from app.services.wecom_channel_service import EVENT_API_ALERT, event_channel_enabled
+
+    return event_channel_enabled(EVENT_API_ALERT)
 
 
 def send_wecom_markdown_to_url(content: str, webhook_url: str) -> bool:
@@ -51,14 +55,25 @@ def send_wecom_markdown_to_url(content: str, webhook_url: str) -> bool:
 
 
 def send_wecom_markdown(content: str) -> bool:
-    webhook_url = (settings.WECOM_WEBHOOK_URL or "").strip()
-    if not settings.WECOM_NOTIFY_ENABLED or not webhook_url:
-        return False
-    return send_wecom_markdown_to_url(content, webhook_url)
+    from app.services.wecom_channel_service import EVENT_DAILY_REPORT
+
+    return dispatch_wecom_event(EVENT_DAILY_REPORT, content, {"report_markdown": content, "content": content})
 
 
 def send_wecom_alert_markdown(content: str) -> bool:
-    webhook_url = (settings.WECOM_ALERT_WEBHOOK_URL or "").strip()
-    if not settings.API_ALERT_ENABLED or not webhook_url:
-        return False
-    return send_wecom_markdown_to_url(content, webhook_url)
+    from app.services.wecom_channel_service import EVENT_API_ALERT
+
+    return dispatch_wecom_event(EVENT_API_ALERT, content, {"alert_markdown": content, "content": content})
+
+
+def dispatch_wecom_event(event_key: str, content: str, context: dict | None = None) -> bool:
+    from app.services.wecom_channel_service import render_wecom_template, resolve_dispatch_targets
+
+    payload = context or {}
+    sent = False
+    for target in resolve_dispatch_targets(event_key, payload):
+        template = (target.get("template_markdown") or "").strip()
+        rendered = render_wecom_template(template, payload) if template else content
+        if send_wecom_markdown_to_url(rendered, target["webhook_url"]):
+            sent = True
+    return sent

@@ -7,6 +7,8 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from app.services.daily_report_service import (
+    DailyReportStats,
+    build_daily_report_markdown,
     collect_online_payment_stats,
     get_previous_day_window,
 )
@@ -67,6 +69,27 @@ class OnlinePaymentRevenueTests(unittest.TestCase):
 
         self.assertEqual(revenue_fen, 1000)
         self.assertEqual(count, 1)
+
+
+class DailyReportMarkdownTests(unittest.TestCase):
+    def test_markdown_includes_new_user_count(self):
+        stats = DailyReportStats(
+            start_at=datetime(2026, 9, 15, 0, 0),
+            end_at=datetime(2026, 9, 16, 0, 0),
+            revenue_fen=0,
+            paid_order_count=0,
+            offline_order_revenue_fen=0,
+            offline_order_count=0,
+            redeem_revenue_yuan=0.0,
+            redeem_used_count=0,
+            task_total_count=0,
+            task_success_count=0,
+            task_failed_count=0,
+            credit_consumed=0,
+            new_user_count=12,
+        )
+        markdown = build_daily_report_markdown(stats)
+        self.assertIn("新增用户数: **12**", markdown)
 
 
 if __name__ == "__main__":

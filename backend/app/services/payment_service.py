@@ -26,7 +26,7 @@ from app.models.user import User
 from app.services.promo_reward_service import PROMO_REBATE_SOURCE_PAYMENT, apply_promo_reward_safely
 from app.services.referral_reward_service import REFERRAL_SOURCE_PAYMENT, apply_referral_reward_safely
 from app.services.user_credit_service import change_user_credit_balance, get_user_credit_account
-from app.services.wecom_notify_service import format_wecom_user_label, send_wecom_markdown
+from app.services.wecom_notify_service import dispatch_wecom_event, format_wecom_user_label
 from app.utils.datetime_utils import now_local
 
 ONLINE_PURCHASE_DESCRIPTION_PREFIX = "在线支付订单 "
@@ -644,7 +644,9 @@ def _send_payment_success_notification(db: Session, order: PaymentOrder) -> None
     credit_account = get_user_credit_account(db, order.user_id, create_if_missing=False)
     remain_credit = int(credit_account.remain_credit or 0) if credit_account else 0
     used_credit = int(credit_account.used_credit or 0) if credit_account else 0
-    send_wecom_markdown(
+    time_text = now_local().strftime("%Y-%m-%d %H:%M:%S")
+    dispatch_wecom_event(
+        "payment_success",
         "## 💰 订单购买成功\n"
         f"> 🧾 订单号: `{order.order_no}`\n"
         f"> 👤 用户: **{user_label}**\n"
@@ -653,7 +655,17 @@ def _send_payment_success_notification(db: Session, order: PaymentOrder) -> None
         f"> ⚡ 积分到账: **{int(order.credits or 0)}**\n"
         f"> ⚡ 已使用积分: **{used_credit}**\n"
         f"> ⚡ 剩余积分: **{remain_credit}**\n"
-        f"> ⏰ 时间: {now_local().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"> ⏰ 时间: {time_text}",
+        {
+            "order_no": order.order_no,
+            "user_label": user_label,
+            "subject": order.subject or order.plan_key,
+            "amount_yuan": amount_yuan,
+            "credits": int(order.credits or 0),
+            "used_credit": used_credit,
+            "remain_credit": remain_credit,
+            "time": time_text,
+        },
     )
 
 

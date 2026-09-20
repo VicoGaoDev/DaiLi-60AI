@@ -11,10 +11,11 @@ from app.models.credit_log import CreditLog
 from app.models.offline_order import OfflineOrder
 from app.models.payment_order import PaymentOrder
 from app.models.task import Task
+from app.models.user import User
 from app.services.payment_service import parse_alipay_payment_time
-from app.services.admin_service import OFFLINE_ORDER_SOURCE_AGENT_POOL, OFFLINE_ORDER_SOURCE_MANUAL
+from app.services.admin_service import OFFLINE_ORDER_SOURCE_AGENT_POOL, OFFLINE_ORDER_SOURCE_MANUAL, _analytics_user_filter
 from app.utils.datetime_utils import now_local, to_local_naive
-from app.services.wecom_notify_service import is_wecom_notify_enabled, send_wecom_markdown
+from app.services.wecom_notify_service import dispatch_wecom_event, is_wecom_notify_enabled
 
 PAYMENT_SUCCESS_STATUSES = ("paid", "credited")
 
@@ -37,6 +38,7 @@ class DailyReportStats:
     task_success_count: int
     task_failed_count: int
     credit_consumed: int
+    new_user_count: int
 
     @property
     def total_revenue_yuan(self) -> float:
@@ -161,7 +163,6 @@ def collect_daily_report_stats(
         .filter(
             Task.created_at >= start_at,
             Task.created_at < end_at,
-            Task.is_deleted.is_(False),
             _exclude_example_template_seed_task_clause(),
         )
         .one()
@@ -173,6 +174,16 @@ def collect_daily_report_stats(
             CreditLog.type == "consume",
             CreditLog.created_at >= start_at,
             CreditLog.created_at < end_at,
+        )
+        .scalar()
+    )
+
+    new_user_count = (
+        db.query(func.count(User.id))
+        .filter(
+            *_analytics_user_filter(),
+            User.created_at >= start_at,
+            User.created_at < end_at,
         )
         .scalar()
     )
@@ -190,6 +201,7 @@ def collect_daily_report_stats(
         task_success_count=int(task_success_count or 0),
         task_failed_count=int(task_failed_count or 0),
         credit_consumed=int(credit_consumed or 0),
+        new_user_count=int(new_user_count or 0),
     )
 
 
@@ -210,6 +222,7 @@ def build_daily_report_markdown(stats: DailyReportStats) -> str:
         f"> 📝 线下订单录入数: **{stats.offline_order_count}**\n"
         f"> 🧑‍💼 代理积分池营业额: <font color=\"warning\">¥{stats.redeem_revenue_yuan:.2f}</font>\n"
         f"> 🔑 代理积分池分配笔数: **{stats.redeem_used_count}**\n"
+        f"> 👤 新增用户数: **{stats.new_user_count}**\n"
         f"> 🖼️ 任务总数: **{stats.task_total_count}**\n"
         f"> 🟢 成功任务数: **{stats.task_success_count}**\n"
         f"> 🔴 失败任务数: **{stats.task_failed_count}**\n"
@@ -237,5 +250,6 @@ def send_range_report(
     stats = collect_daily_report_stats(db, start_at=normalized_start, end_at=normalized_end)
     sent = False
     if is_wecom_notify_enabled():
-        sent = send_wecom_markdown(build_daily_report_markdown(stats))
+        markdown = build_daily_report_markdown(stats)
+        sent = dispatch_wecom_event("daily_report", markdown, {"report_markdown": markdown})
     return DailyReportSendResult(sent=sent, stats=stats)

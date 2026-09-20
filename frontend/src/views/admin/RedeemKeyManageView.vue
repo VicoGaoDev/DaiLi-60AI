@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { message } from "ant-design-vue";
+import { message, Modal } from "ant-design-vue";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { CopyOutlined, GiftOutlined } from "@ant-design/icons-vue";
@@ -11,13 +11,33 @@ import { copyText } from "@/lib/clipboard";
 import { getAvatarImageSrc } from "@/api/images";
 import type { AdminRedeemKey, AdminRedeemKeyBatchResult, AdminUser, RedeemKeyStatus } from "@/types";
 
-const loading = ref(false);
+type RedeemListState = {
+  items: AdminRedeemKey[];
+  loading: boolean;
+  page: number;
+  pageSize: number;
+  total: number;
+  selectedRowKeys: number[];
+};
+
+function createListState(): RedeemListState {
+  return reactive({
+    items: [],
+    loading: false,
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    selectedRowKeys: [],
+  });
+}
+
 const generating = ref(false);
+const createDialogOpen = ref(false);
 const statusLoadingId = ref<number | null>(null);
 const latestBatch = ref<AdminRedeemKeyBatchResult | null>(null);
-const items = ref<AdminRedeemKey[]>([]);
+const saleList = createListState();
+const giftList = createListState();
 const users = ref<AdminUser[]>([]);
-const selectedRowKeys = ref<number[]>([]);
 const userInfoOpen = ref(false);
 const userInfoTarget = ref<AdminUser | null>(null);
 const route = useRoute();
@@ -25,8 +45,10 @@ type DateShortcut = "today" | "last7Days" | "thisWeek";
 const dateShortcut = ref<DateShortcut | undefined>();
 
 const batchForm = reactive({
-  count: 10,
-  creditAmount: 10,
+  count: 1,
+  creditAmount: 100,
+  saleAmountYuan: undefined as number | undefined,
+  isGift: false,
 });
 
 const filters = reactive({
@@ -36,21 +58,17 @@ const filters = reactive({
   status: undefined as RedeemKeyStatus | undefined,
   isUsed: undefined as boolean | undefined,
   usedBy: "",
-  createdBy: "",
   dateRange: null as [Dayjs, Dayjs] | null,
 });
 
-const pagination = reactive({
-  page: 1,
-  pageSize: 20,
-  total: 0,
-});
-
-const columns = [
+const sharedColumns = [
   { title: "批次", dataIndex: "batch_no", width: 170 },
   { title: "兑换码", dataIndex: "redeem_key", width: 190 },
   { title: "积分值", dataIndex: "credit_amount", width: 88 },
   { title: "发行人", dataIndex: "created_by_username", width: 120 },
+];
+
+const statusColumns = [
   { title: "状态", dataIndex: "status", width: 90 },
   { title: "是否已使用", dataIndex: "is_used", width: 100 },
   { title: "使用人", dataIndex: "used_by_username", width: 220 },
@@ -58,78 +76,162 @@ const columns = [
   { title: "操作", key: "action", width: 120 },
 ];
 
-const selectedItems = computed(() => {
-  const keySet = new Set(selectedRowKeys.value);
-  return items.value.filter((item) => keySet.has(item.id));
-});
+const saleColumns = [
+  ...sharedColumns,
+  { title: "售价", dataIndex: "sale_amount_yuan", width: 100 },
+  ...statusColumns,
+];
 
-const isCurrentPageFullySelected = computed(
-  () => items.value.length > 0 && items.value.every((item) => selectedRowKeys.value.includes(item.id))
-);
+const giftColumns = [...sharedColumns, ...statusColumns];
 
-const rowSelection = computed(() => ({
-  selectedRowKeys: selectedRowKeys.value,
-  onChange: (keys: Array<string | number>) => {
-    selectedRowKeys.value = keys.map((key) => Number(key));
-  },
-}));
+function onSalePageChange(page: number, pageSize: number) {
+  handlePageChange(saleList, false, page, pageSize);
+}
+
+function onGiftPageChange(page: number, pageSize: number) {
+  handlePageChange(giftList, true, page, pageSize);
+}
+
+const tableSections = [
+  { kind: "sale" as const, title: "售卖积分", state: saleList, isGift: false, columns: saleColumns, scrollX: 1100, onPageChange: onSalePageChange },
+  { kind: "gift" as const, title: "赠送积分", state: giftList, isGift: true, columns: giftColumns, scrollX: 1000, onPageChange: onGiftPageChange },
+];
 
 function findAdminUser(userId?: string | null) {
   if (!userId) return null;
   return users.value.find((item) => item.id === userId) || null;
 }
 
-async function load() {
-  loading.value = true;
+function listQuery(state: RedeemListState, isGift: boolean) {
+  return {
+    page: state.page,
+    page_size: state.pageSize,
+    batch_no: filters.batchNo.trim() || undefined,
+    redeem_key: filters.redeemKey.trim() || undefined,
+    credit_amount: filters.creditAmount,
+    status: filters.status,
+    is_used: filters.isUsed,
+    is_gift: isGift,
+    used_by: filters.usedBy.trim() || undefined,
+    source: "system" as const,
+    start_date: formatQueryDate(filters.dateRange?.[0].startOf("day")),
+    end_date: formatQueryDate(filters.dateRange?.[1].endOf("day")),
+  };
+}
+
+async function loadList(state: RedeemListState, isGift: boolean) {
+  state.loading = true;
   try {
-    const res = await listRedeemKeys({
-      page: pagination.page,
-      page_size: pagination.pageSize,
-      batch_no: filters.batchNo.trim() || undefined,
-      redeem_key: filters.redeemKey.trim() || undefined,
-      credit_amount: filters.creditAmount,
-      status: filters.status,
-      is_used: filters.isUsed,
-      used_by: filters.usedBy.trim() || undefined,
-      created_by: filters.createdBy.trim() || undefined,
-      source: "system",
-      start_date: formatQueryDate(filters.dateRange?.[0].startOf("day")),
-      end_date: formatQueryDate(filters.dateRange?.[1].endOf("day")),
-    });
-    items.value = res.items;
-    pagination.total = res.total;
-    selectedRowKeys.value = [];
+    const res = await listRedeemKeys(listQuery(state, isGift));
+    state.items = res.items;
+    state.total = res.total;
+    state.selectedRowKeys = [];
   } catch (err: any) {
     message.error(err.response?.data?.detail || "获取兑换码列表失败");
   } finally {
-    loading.value = false;
+    state.loading = false;
+  }
+}
+
+async function load() {
+  await Promise.all([loadList(saleList, false), loadList(giftList, true)]);
+}
+
+function resetBatchForm() {
+  batchForm.count = 1;
+  batchForm.creditAmount = 100;
+  batchForm.saleAmountYuan = undefined;
+  batchForm.isGift = false;
+}
+
+function openCreateDialog() {
+  resetBatchForm();
+  createDialogOpen.value = true;
+}
+
+function handleGiftChange(checked: boolean) {
+  batchForm.isGift = checked;
+  if (checked) {
+    batchForm.saleAmountYuan = undefined;
+  }
+}
+
+function formatSalePrice(item: Pick<AdminRedeemKey, "is_gift" | "sale_amount_yuan">) {
+  if (item.is_gift) return "赠送";
+  if (item.sale_amount_yuan != null && item.sale_amount_yuan > 0) {
+    return `¥${item.sale_amount_yuan.toFixed(2)}`;
+  }
+  return "预算";
+}
+
+function latestBatchSummary(batch: AdminRedeemKeyBatchResult) {
+  const extra = batch.is_gift
+    ? "，赠送积分，不计入营业额"
+    : batch.sale_amount_yuan != null && batch.sale_amount_yuan > 0
+      ? `，售价 ¥${batch.sale_amount_yuan.toFixed(2)}`
+      : "，按预算单价";
+  return `最近批次：${batch.batch_no}，共 ${batch.count} 个，每个 ${batch.credit_amount} 积分${extra}`;
+}
+
+function confirmGiftBatch() {
+  const count = batchForm.count;
+  const creditAmount = batchForm.creditAmount;
+  return new Promise<void>((resolve, reject) => {
+    Modal.confirm({
+      title: "确认生成赠送兑换码",
+      content: `将生成 ${count} 个赠送兑换码，每个 ${creditAmount} 积分，不计入营业额。生成后类型不可修改。`,
+      okText: "确认生成",
+      cancelText: "取消",
+      centered: true,
+      zIndex: 1100,
+      onOk: () => resolve(),
+      onCancel: () => reject(),
+    });
+  });
+}
+
+async function submitCreateBatch() {
+  generating.value = true;
+  try {
+    latestBatch.value = await createRedeemKeysBatch(batchForm.count, batchForm.creditAmount, {
+      saleAmountYuan: batchForm.isGift ? undefined : batchForm.saleAmountYuan,
+      isGift: batchForm.isGift,
+    });
+    message.success(`已生成 ${latestBatch.value.count} 个兑换码`);
+    createDialogOpen.value = false;
+    saleList.page = 1;
+    giftList.page = 1;
+    await load();
+  } catch (err: any) {
+    message.error(err.response?.data?.detail || "生成兑换码失败");
+    throw err;
+  } finally {
+    generating.value = false;
   }
 }
 
 async function handleCreateBatch() {
   if (!batchForm.count || batchForm.count <= 0) {
     message.warning("请输入有效的生成数量");
-    return;
+    return Promise.reject();
   }
   if (!batchForm.creditAmount || batchForm.creditAmount <= 0) {
     message.warning("请输入有效的积分值");
-    return;
+    return Promise.reject();
   }
-  generating.value = true;
-  try {
-    latestBatch.value = await createRedeemKeysBatch(batchForm.count, batchForm.creditAmount);
-    message.success(`已生成 ${latestBatch.value.count} 个兑换码`);
-    pagination.page = 1;
-    await load();
-  } catch (err: any) {
-    message.error(err.response?.data?.detail || "生成兑换码失败");
-  } finally {
-    generating.value = false;
+  if (!batchForm.isGift && batchForm.saleAmountYuan != null && batchForm.saleAmountYuan <= 0) {
+    message.warning("金额必须大于 0");
+    return Promise.reject();
   }
+  if (batchForm.isGift) {
+    await confirmGiftBatch();
+  }
+  await submitCreateBatch();
 }
 
 function handleFilter() {
-  pagination.page = 1;
+  saleList.page = 1;
+  giftList.page = 1;
   load();
 }
 
@@ -140,10 +242,10 @@ function handleReset() {
   filters.status = undefined;
   filters.isUsed = undefined;
   filters.usedBy = "";
-  filters.createdBy = "";
   filters.dateRange = null;
   dateShortcut.value = undefined;
-  pagination.page = 1;
+  saleList.page = 1;
+  giftList.page = 1;
   load();
 }
 
@@ -172,10 +274,28 @@ function handleDateRangeChange() {
   dateShortcut.value = undefined;
 }
 
-function handlePageChange(page: number, pageSize?: number) {
-  pagination.page = page;
-  if (pageSize) pagination.pageSize = pageSize;
-  load();
+function handlePageChange(state: RedeemListState, isGift: boolean, page: number, pageSize?: number) {
+  state.page = page;
+  if (pageSize) state.pageSize = pageSize;
+  void loadList(state, isGift);
+}
+
+function selectedItemsOf(state: RedeemListState) {
+  const keySet = new Set(state.selectedRowKeys);
+  return state.items.filter((item) => keySet.has(item.id));
+}
+
+function isPageFullySelected(state: RedeemListState) {
+  return state.items.length > 0 && state.items.every((item) => state.selectedRowKeys.includes(item.id));
+}
+
+function tableRowSelection(state: RedeemListState) {
+  return {
+    selectedRowKeys: state.selectedRowKeys,
+    onChange: (keys: Array<string | number>) => {
+      state.selectedRowKeys = keys.map((key) => Number(key));
+    },
+  };
 }
 
 async function handleCopy(text: string, successText = "内容已复制") {
@@ -196,17 +316,18 @@ async function copyLatestBatch() {
   await handleCopy(keys, "兑换码已复制");
 }
 
-function toggleSelectCurrentPage() {
-  selectedRowKeys.value = isCurrentPageFullySelected.value ? [] : items.value.map((item) => item.id);
+function toggleSelectCurrentPage(state: RedeemListState) {
+  state.selectedRowKeys = isPageFullySelected(state) ? [] : state.items.map((item) => item.id);
 }
 
-async function copySelectedKeys() {
-  const keys = selectedItems.value.map((item) => item.redeem_key).join("\n");
+async function copySelectedKeys(state: RedeemListState) {
+  const selectedItems = selectedItemsOf(state);
+  const keys = selectedItems.map((item) => item.redeem_key).join("\n");
   if (!keys) {
     message.warning("请先选择当前页兑换码");
     return;
   }
-  await handleCopy(keys, `已复制 ${selectedItems.value.length} 个兑换码`);
+  await handleCopy(keys, `已复制 ${selectedItems.length} 个兑换码`);
 }
 
 function openUserInfo(item: AdminRedeemKey) {
@@ -293,28 +414,20 @@ onMounted(() => {
         </div>
         <div>
           <div class="warm-page-title">兑换码管理</div>
-          <div class="warm-page-desc">仅展示系统创建的兑换码，支持批量生成、查看使用状态，并对未使用兑换码执行启用或禁用。</div>
+          <div class="warm-page-desc">支持批量生成积分兑换码、查看是否已使用，并对未使用兑换码执行启用或禁用。</div>
         </div>
       </div>
       <div class="header-actions">
-        <a-form layout="inline" class="redeem-create-form">
-          <a-form-item label="生成数量">
-            <a-input-number v-model:value="batchForm.count" :min="1" :max="1000" class="warm-input-number redeem-half-number" />
-          </a-form-item>
-          <a-form-item label="每个积分">
-            <a-input-number v-model:value="batchForm.creditAmount" :min="1" class="warm-input-number redeem-half-number" />
-          </a-form-item>
-          <a-button type="primary" class="warm-primary-btn action-btn" :loading="generating" @click="handleCreateBatch">
-            批量生成
-          </a-button>
-          <a-button class="filter-reset-btn action-btn" @click="copyLatestBatch">复制最近一批</a-button>
-        </a-form>
+        <a-button type="primary" class="warm-primary-btn action-btn" @click="openCreateDialog">
+          生成兑换码
+        </a-button>
+        <a-button class="filter-reset-btn action-btn" @click="copyLatestBatch">复制最近一批</a-button>
       </div>
     </div>
 
     <div v-if="latestBatch" class="warm-card redeem-batch-summary-card motion-fade-up motion-card-lift" style="--motion-delay: 120ms">
       <div class="redeem-batch-summary">
-        最近批次：{{ latestBatch.batch_no }}，共 {{ latestBatch.count }} 个，每个 {{ latestBatch.credit_amount }} 积分
+        {{ latestBatchSummary(latestBatch) }}
       </div>
     </div>
 
@@ -361,12 +474,6 @@ onMounted(() => {
         placeholder="按使用人/邮箱筛选"
         class="warm-input redeem-filter-input"
       />
-      <a-input
-        v-model:value="filters.createdBy"
-        allow-clear
-        placeholder="按发行人筛选"
-        class="warm-input redeem-filter-input"
-      />
       <a-range-picker
         v-model:value="filters.dateRange"
         :placeholder="['使用开始', '使用结束']"
@@ -389,28 +496,38 @@ onMounted(() => {
       <a-button class="analytics-action-btn analytics-action-btn-secondary action-btn" @click="handleReset">重置</a-button>
     </div>
 
-    <div class="warm-card warm-table-card motion-fade-up motion-card-lift" style="--motion-delay: 240ms">
-      <div class="table-toolbar">
-        <div class="table-toolbar-summary">
-          当前页已选 <span>{{ selectedItems.length }}</span> / {{ items.length }}
+    <div
+      v-for="(section, index) in tableSections"
+      :key="section.kind"
+      class="warm-card warm-table-card redeem-table-card motion-fade-up motion-card-lift"
+      :style="{ '--motion-delay': `${240 + index * 60}ms` }"
+    >
+      <div class="table-section-head">
+        <div class="section-title" :class="section.kind === 'gift' ? 'section-title-gift' : 'section-title-sale'">
+          {{ section.title }}
         </div>
-        <div class="table-toolbar-actions">
-          <a-button class="filter-reset-btn action-btn table-toolbar-btn" @click="toggleSelectCurrentPage">
-            {{ isCurrentPageFullySelected ? "取消全选本页" : "全选本页" }}
-          </a-button>
-          <a-button class="filter-reset-btn action-btn table-toolbar-btn" @click="copySelectedKeys">
-            批量复制已选
-          </a-button>
+        <div class="table-toolbar">
+          <div class="table-toolbar-summary">
+            当前页已选 <span>{{ selectedItemsOf(section.state).length }}</span> / {{ section.state.items.length }}
+          </div>
+          <div class="table-toolbar-actions">
+            <a-button class="filter-reset-btn action-btn table-toolbar-btn" @click="toggleSelectCurrentPage(section.state)">
+              {{ isPageFullySelected(section.state) ? "取消全选本页" : "全选本页" }}
+            </a-button>
+            <a-button class="filter-reset-btn action-btn table-toolbar-btn" @click="copySelectedKeys(section.state)">
+              批量复制已选
+            </a-button>
+          </div>
         </div>
       </div>
       <a-table
-        :columns="columns"
-        :data-source="items"
-        :loading="loading"
+        :columns="section.columns"
+        :data-source="section.state.items"
+        :loading="section.state.loading"
         :pagination="false"
         row-key="id"
-        :row-selection="rowSelection"
-        :scroll="{ x: 1180 }"
+        :row-selection="tableRowSelection(section.state)"
+        :scroll="{ x: section.scrollX }"
         class="admin-mobile-table"
       >
         <template #bodyCell="{ column, record }">
@@ -428,8 +545,8 @@ onMounted(() => {
           <template v-else-if="column.dataIndex === 'credit_amount'">
             <span class="credit-amount">{{ record.credit_amount }}</span>
           </template>
-          <template v-else-if="column.dataIndex === 'created_by_username'">
-            {{ record.created_by_username || "-" }}
+          <template v-else-if="column.dataIndex === 'sale_amount_yuan'">
+            <span class="sale-amount">{{ formatSalePrice(record) }}</span>
           </template>
           <template v-else-if="column.dataIndex === 'status'">
             <a-tag class="warm-tag" :class="record.status === 'enabled' ? 'warm-tag-whitelist' : 'warm-tag-muted'">
@@ -480,22 +597,55 @@ onMounted(() => {
           </template>
         </template>
       </a-table>
-    </div>
-
-    <div class="warm-pagination">
-      <div class="pagination-summary">共 {{ pagination.total }} 个兑换码</div>
-      <a-pagination
-        v-if="pagination.total > pagination.pageSize"
-        :current="pagination.page"
-        :total="pagination.total"
-        :page-size="pagination.pageSize"
-        show-size-changer
-        @change="handlePageChange"
-        @showSizeChange="handlePageChange"
-      />
+      <div class="warm-pagination redeem-table-pagination">
+        <div class="pagination-summary">共 {{ section.state.total }} 个{{ section.kind === "gift" ? "赠送" : "售卖" }}兑换码</div>
+        <a-pagination
+          v-if="section.state.total > section.state.pageSize"
+          :current="section.state.page"
+          :total="section.state.total"
+          :page-size="section.state.pageSize"
+          show-size-changer
+          @change="section.onPageChange"
+          @showSizeChange="section.onPageChange"
+        />
+      </div>
     </div>
 
     <AdminUserInfoDialog v-model:open="userInfoOpen" :user="userInfoTarget" />
+
+    <a-modal
+      v-model:open="createDialogOpen"
+      title="生成兑换码"
+      centered
+      :confirm-loading="generating"
+      ok-text="生成"
+      cancel-text="取消"
+      :width="480"
+      @ok="handleCreateBatch"
+    >
+      <a-form layout="vertical" class="redeem-create-form">
+        <a-form-item label="生成数量" required>
+          <a-input-number v-model:value="batchForm.count" :min="1" :max="1000" class="warm-input-number redeem-full-number" />
+        </a-form-item>
+        <a-form-item label="每个积分" required>
+          <a-input-number v-model:value="batchForm.creditAmount" :min="1" class="warm-input-number redeem-full-number" />
+        </a-form-item>
+        <a-form-item label="金额（元）">
+          <a-input-number
+            v-model:value="batchForm.saleAmountYuan"
+            :min="0.01"
+            :precision="2"
+            :disabled="batchForm.isGift"
+            class="warm-input-number redeem-full-number"
+            placeholder="不填则按预算单价计算营业额"
+          />
+        </a-form-item>
+        <a-form-item label="赠送积分">
+          <a-switch v-model:checked="batchForm.isGift" @change="handleGiftChange" />
+          <div class="redeem-form-hint">勾选后该批兑换码不计入营业额</div>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -507,13 +657,42 @@ onMounted(() => {
   gap: 8px;
 }
 
+.redeem-table-card {
+  margin-bottom: 16px;
+}
+
+.table-section-head {
+  padding: 16px 16px 0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--theme-title);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.section-title-sale {
+  color: #b45309;
+}
+
+.section-title-gift {
+  color: #1f7a45;
+}
+
 .table-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px 16px 18px;
+  padding: 12px 0 16px;
   flex-wrap: wrap;
+}
+
+.redeem-table-pagination {
+  padding: 4px 16px 16px;
 }
 
 .table-toolbar-summary {
@@ -538,10 +717,18 @@ onMounted(() => {
 }
 
 .redeem-create-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+.redeem-full-number {
+  width: 100%;
+}
+
+.redeem-form-hint {
+  margin-top: 8px;
+  color: #8c7458;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .redeem-batch-summary-card {
@@ -627,9 +814,22 @@ onMounted(() => {
   color: #8c7458;
 }
 
-.credit-amount {
+.credit-amount,
+.sale-amount {
   font-weight: 700;
   color: var(--theme-accent-text);
+}
+
+.warm-tag-gift {
+  color: #1f7a45 !important;
+  background: #e6f7ed !important;
+  border-color: #8fd4a8 !important;
+}
+
+.warm-tag-sale {
+  color: #b45309 !important;
+  background: #fff1d6 !important;
+  border-color: #f0b45a !important;
 }
 
 .used-user-cell {
@@ -720,6 +920,26 @@ onMounted(() => {
   border-color: var(--theme-panel-border);
 }
 
+html:is([data-theme="dark"], [data-theme="midnight"]) .section-title-gift {
+  color: #8ee0a8;
+}
+
+html:is([data-theme="dark"], [data-theme="midnight"]) .section-title-sale {
+  color: #ffc56a;
+}
+
+html:is([data-theme="dark"], [data-theme="midnight"]) .warm-tag-gift {
+  color: #8ee0a8 !important;
+  background: #1c3a28 !important;
+  border-color: #3f7a54 !important;
+}
+
+html:is([data-theme="dark"], [data-theme="midnight"]) .warm-tag-sale {
+  color: #ffc56a !important;
+  background: #3a2710 !important;
+  border-color: #8a5c1e !important;
+}
+
 .filter-reset-btn {
   height: 36px;
   border-radius: 12px;
@@ -746,14 +966,11 @@ onMounted(() => {
 @media (max-width: 768px) {
   .header-actions,
   .redeem-filter-bar,
+  .table-section-head,
   .table-toolbar,
   .table-toolbar-actions {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .redeem-create-form {
-    justify-content: stretch;
   }
 
   .redeem-filter-input,

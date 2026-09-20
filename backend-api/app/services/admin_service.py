@@ -1301,6 +1301,12 @@ REDEEM_UNIT_PRICES: dict[int, float] = {
 }
 
 
+def _redeem_unit_price_yuan(credit_amount: int, sale_amount_fen: int | None = None) -> float:
+    if sale_amount_fen is not None and int(sale_amount_fen) > 0:
+        return round(int(sale_amount_fen) / 100, 2)
+    return float(REDEEM_UNIT_PRICES.get(int(credit_amount or 0), 0.0))
+
+
 def get_analytics_redeem_revenue(
     db: Session,
     *,
@@ -1313,24 +1319,44 @@ def get_analytics_redeem_revenue(
     rows = (
         db.query(
             CreditRedeemKey.credit_amount,
+            CreditRedeemKey.sale_amount_fen,
             func.count(CreditRedeemKey.id).label("used_count"),
         )
         .filter(
             CreditRedeemKey.used_at.isnot(None),
+            CreditRedeemKey.is_gift.is_(False),
             CreditRedeemKey.used_at >= current_start,
             CreditRedeemKey.used_at <= current_end,
         )
-        .group_by(CreditRedeemKey.credit_amount)
+        .group_by(CreditRedeemKey.credit_amount, CreditRedeemKey.sale_amount_fen)
         .all()
     )
-    count_map = {int(row.credit_amount): int(row.used_count) for row in rows}
+
+    budget_count_map: dict[int, int] = {}
+    custom_items: list[dict] = []
+    for row in rows:
+        credit_amount = int(row.credit_amount or 0)
+        used_count = int(row.used_count or 0)
+        sale_amount_fen = row.sale_amount_fen
+        if sale_amount_fen is not None and int(sale_amount_fen) > 0:
+            unit_price = _redeem_unit_price_yuan(credit_amount, sale_amount_fen)
+            custom_items.append(
+                {
+                    "credit_amount": credit_amount,
+                    "unit_price": unit_price,
+                    "used_count": used_count,
+                    "total_amount": round(used_count * unit_price, 2),
+                }
+            )
+            continue
+        budget_count_map[credit_amount] = budget_count_map.get(credit_amount, 0) + used_count
 
     items: list[dict] = []
     total_used_count = 0
     total_amount = 0.0
 
     for credit_amount in sorted(REDEEM_UNIT_PRICES):
-        used_count = count_map.pop(credit_amount, 0)
+        used_count = budget_count_map.pop(credit_amount, 0)
         unit_price = REDEEM_UNIT_PRICES[credit_amount]
         subtotal = round(used_count * unit_price, 2)
         items.append(
@@ -1344,8 +1370,13 @@ def get_analytics_redeem_revenue(
         total_used_count += used_count
         total_amount += subtotal
 
-    for credit_amount in sorted(count_map):
-        used_count = count_map[credit_amount]
+    for item in sorted(custom_items, key=lambda row: (row["credit_amount"], row["unit_price"])):
+        items.append(item)
+        total_used_count += int(item["used_count"])
+        total_amount += float(item["total_amount"])
+
+    for credit_amount in sorted(budget_count_map):
+        used_count = budget_count_map[credit_amount]
         items.append(
             {
                 "credit_amount": credit_amount,
@@ -1356,9 +1387,22 @@ def get_analytics_redeem_revenue(
         )
         total_used_count += used_count
 
+    merged_items: list[dict] = []
+    index_by_key: dict[tuple[int, float], int] = {}
+    for item in items:
+        key = (int(item["credit_amount"]), float(item["unit_price"]))
+        existing_index = index_by_key.get(key)
+        if existing_index is None:
+            index_by_key[key] = len(merged_items)
+            merged_items.append(item)
+            continue
+        existing = merged_items[existing_index]
+        existing["used_count"] = int(existing["used_count"]) + int(item["used_count"])
+        existing["total_amount"] = round(int(existing["used_count"]) * float(existing["unit_price"]), 2)
+
     return {
         "range_label": _format_range_label(current_start, current_end),
-        "items": items,
+        "items": merged_items,
         "total_used_count": total_used_count,
         "total_amount": round(total_amount, 2),
     }

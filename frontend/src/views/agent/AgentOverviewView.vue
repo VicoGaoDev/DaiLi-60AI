@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { message, Modal } from "ant-design-vue";
 import { CopyOutlined, DeleteOutlined, GiftOutlined, HistoryOutlined, LockOutlined, UnlockOutlined, WalletOutlined } from "@ant-design/icons-vue";
+import {
+  getAdminAgentCreditLogs,
+  getAdminAgentOverview,
+  listAdminAgentRedeemKeys,
+} from "@/api/admin";
 import {
   createAgentRedeemKeysBatch,
   deleteAgentRedeemKey,
@@ -15,6 +21,12 @@ import { copyText } from "@/lib/clipboard";
 import type { AdminRedeemKey, AdminRedeemKeyBatchResult, AgentOverview, CreditLog, RedeemKeyStatus } from "@/types";
 
 type AgentLogTypeFilter = "allocate" | "agent_pool_deduct";
+
+const route = useRoute();
+const router = useRouter();
+const isReadOnly = computed(() => Boolean(route.meta.agentReadOnly));
+const targetAgentId = computed(() => String(route.params.userId || ""));
+const viewedAgentName = computed(() => overview.value.username || String(route.query.username || "") || "代理人");
 
 const overviewLoading = ref(false);
 const redeemLoading = ref(false);
@@ -59,17 +71,22 @@ const logsDateRange = ref<string[]>(getTodayDateRange());
 const redeemPagination = reactive({ page: 1, pageSize: 20, total: 0 });
 const logsPagination = reactive({ page: 1, pageSize: 20, total: 0 });
 
-const redeemColumns = [
-  { title: "批次", dataIndex: "batch_no", width: 170 },
-  { title: "兑换码", dataIndex: "redeem_key", width: 190 },
-  { title: "积分值", dataIndex: "credit_amount", width: 88 },
-  { title: "状态", dataIndex: "status", width: 90 },
-  { title: "锁定状态", dataIndex: "is_locked", width: 110 },
-  { title: "是否已使用", dataIndex: "is_used", width: 100 },
-  { title: "使用人", dataIndex: "used_by_username", width: 160 },
-  { title: "使用时间", dataIndex: "used_at", width: 170 },
-  { title: "操作", key: "action", width: 240 },
-];
+const redeemColumns = computed(() => {
+  const columns = [
+    { title: "批次", dataIndex: "batch_no", width: 170 },
+    { title: "兑换码", dataIndex: "redeem_key", width: 190 },
+    { title: "积分值", dataIndex: "credit_amount", width: 88 },
+    { title: "状态", dataIndex: "status", width: 90 },
+    { title: "锁定状态", dataIndex: "is_locked", width: 110 },
+    { title: "是否已使用", dataIndex: "is_used", width: 100 },
+    { title: "使用人", dataIndex: "used_by_username", width: 160 },
+    { title: "使用时间", dataIndex: "used_at", width: 170 },
+  ];
+  if (!isReadOnly.value) {
+    columns.push({ title: "操作", key: "action", width: 240 });
+  }
+  return columns;
+});
 
 const selectedRedeemItems = computed(() => redeemItems.value.filter((item) => selectedRowKeys.value.includes(item.id)));
 const deletableSelectedRedeemItems = computed(() => selectedRedeemItems.value.filter((item) => !item.is_used && !item.is_locked));
@@ -90,10 +107,37 @@ const rowSelection = computed(() => ({
   },
 }));
 
+function redeemKeyQuery() {
+  return {
+    page: redeemPagination.page,
+    page_size: redeemPagination.pageSize,
+    batch_no: redeemFilters.batchNo.trim() || undefined,
+    redeem_key: redeemFilters.redeemKey.trim() || undefined,
+    credit_amount: redeemFilters.creditAmount,
+    status: redeemFilters.status,
+    is_used: redeemFilters.isUsed,
+    used_by: redeemFilters.usedBy.trim() || undefined,
+  };
+}
+
+function creditLogQuery() {
+  return {
+    page: logsPagination.page,
+    page_size: logsPagination.pageSize,
+    user_keyword: logsFilters.userKeyword.trim() || undefined,
+    type: logsFilters.type,
+    redeem_key: logsFilters.redeemKey.trim() || undefined,
+    start_date: logsDateRange.value[0] ? `${logsDateRange.value[0]} 00:00:00` : undefined,
+    end_date: logsDateRange.value[1] ? `${logsDateRange.value[1]} 23:59:59` : undefined,
+  };
+}
+
 async function loadOverview() {
   overviewLoading.value = true;
   try {
-    overview.value = await getAgentOverview();
+    overview.value = isReadOnly.value
+      ? await getAdminAgentOverview(targetAgentId.value)
+      : await getAgentOverview();
   } catch (err: any) {
     message.error(err.response?.data?.detail || "获取代理人总览失败");
   } finally {
@@ -104,16 +148,9 @@ async function loadOverview() {
 async function loadRedeemKeys() {
   redeemLoading.value = true;
   try {
-    const res = await listAgentRedeemKeys({
-      page: redeemPagination.page,
-      page_size: redeemPagination.pageSize,
-      batch_no: redeemFilters.batchNo.trim() || undefined,
-      redeem_key: redeemFilters.redeemKey.trim() || undefined,
-      credit_amount: redeemFilters.creditAmount,
-      status: redeemFilters.status,
-      is_used: redeemFilters.isUsed,
-      used_by: redeemFilters.usedBy.trim() || undefined,
-    });
+    const res = isReadOnly.value
+      ? await listAdminAgentRedeemKeys(targetAgentId.value, redeemKeyQuery())
+      : await listAgentRedeemKeys(redeemKeyQuery());
     redeemItems.value = res.items;
     redeemPagination.total = res.total;
     selectedRowKeys.value = [];
@@ -127,15 +164,9 @@ async function loadRedeemKeys() {
 async function loadCreditLogs() {
   logsLoading.value = true;
   try {
-    const res = await getAgentCreditLogs({
-      page: logsPagination.page,
-      page_size: logsPagination.pageSize,
-      user_keyword: logsFilters.userKeyword.trim() || undefined,
-      type: logsFilters.type,
-      redeem_key: logsFilters.redeemKey.trim() || undefined,
-      start_date: logsDateRange.value[0] ? `${logsDateRange.value[0]} 00:00:00` : undefined,
-      end_date: logsDateRange.value[1] ? `${logsDateRange.value[1]} 23:59:59` : undefined,
-    });
+    const res = isReadOnly.value
+      ? await getAdminAgentCreditLogs(targetAgentId.value, creditLogQuery())
+      : await getAgentCreditLogs(creditLogQuery());
     logItems.value = res.items;
     logsPagination.total = res.total;
     filteredRedeemedCredits.value = Number(res.redeemed_credits || 0);
@@ -147,10 +178,12 @@ async function loadCreditLogs() {
 }
 
 async function loadAll() {
+  if (isReadOnly.value && !targetAgentId.value) return;
   await Promise.all([loadOverview(), loadRedeemKeys(), loadCreditLogs()]);
 }
 
 async function handleCreateBatch() {
+  if (isReadOnly.value) return;
   if (!batchForm.count || batchForm.count <= 0 || !batchForm.creditAmount || batchForm.creditAmount <= 0) {
     message.warning("请输入有效的生成数量和积分值");
     return;
@@ -269,6 +302,7 @@ function fmtAgentLogDescription(log: CreditLog) {
 }
 
 async function toggleStatus(item: AdminRedeemKey) {
+  if (isReadOnly.value) return;
   const nextStatus: RedeemKeyStatus = item.status === "enabled" ? "disabled" : "enabled";
   statusLoadingId.value = item.id;
   try {
@@ -283,6 +317,7 @@ async function toggleStatus(item: AdminRedeemKey) {
 }
 
 async function toggleLock(item: AdminRedeemKey) {
+  if (isReadOnly.value) return;
   const nextLocked = !item.is_locked;
   lockLoadingId.value = item.id;
   try {
@@ -297,6 +332,7 @@ async function toggleLock(item: AdminRedeemKey) {
 }
 
 function confirmBatchLock(targetLocked: boolean) {
+  if (isReadOnly.value) return;
   if (!selectedRedeemItems.value.length) {
     message.warning(`请先选择要${targetLocked ? "锁定" : "解锁"}的兑换码`);
     return;
@@ -336,6 +372,7 @@ function confirmBatchLock(targetLocked: boolean) {
 }
 
 function confirmDelete(item: AdminRedeemKey) {
+  if (isReadOnly.value) return;
   if (item.is_locked) {
     message.warning("兑换码已锁定，请先解除锁定后再删除");
     return;
@@ -362,6 +399,7 @@ function confirmDelete(item: AdminRedeemKey) {
 }
 
 function confirmBatchDelete() {
+  if (isReadOnly.value) return;
   if (!selectedRedeemItems.value.length) {
     message.warning("请先选择要删除的兑换码");
     return;
@@ -398,6 +436,13 @@ function confirmBatchDelete() {
   });
 }
 
+watch(
+  () => targetAgentId.value,
+  () => {
+    void loadAll();
+  },
+);
+
 onMounted(() => {
   void loadAll();
 });
@@ -411,8 +456,19 @@ onMounted(() => {
           <div class="warm-page-heading">
             <div class="warm-page-icon"><WalletOutlined /></div>
             <div>
-              <div class="warm-page-title">代理后台</div>
-              <div class="warm-page-desc">查看代理积分池、未兑启用码占用和可继续发放额度。</div>
+              <div class="warm-page-title-row">
+                <div class="warm-page-title">{{ isReadOnly ? `${viewedAgentName} 的代理后台` : "代理后台" }}</div>
+                <a-button v-if="isReadOnly" class="filter-reset-btn action-btn" @click="router.push({ name: 'AdminAgentData' })">
+                  返回代理人数据
+                </a-button>
+              </div>
+              <div class="warm-page-desc">
+                {{
+                  isReadOnly
+                    ? "只读查看该代理人的积分池、兑换码和流水，不能新增、编辑或删除。"
+                    : "查看代理积分池、未兑启用码占用和可继续发放额度。"
+                }}
+              </div>
             </div>
           </div>
           <div class="overview-grid">
@@ -447,7 +503,7 @@ onMounted(() => {
                   <div class="section-desc">发码不预扣积分池；用户兑换成功时才从代理积分池扣减。</div>
                 </div>
               </div>
-              <a-form layout="inline" class="redeem-create-form">
+              <a-form v-if="!isReadOnly" layout="inline" class="redeem-create-form">
                 <a-form-item label="生成数量">
                   <a-input-number v-model:value="batchForm.count" :min="1" :max="1000" class="warm-input-number redeem-half-number" />
                 </a-form-item>
@@ -462,7 +518,7 @@ onMounted(() => {
               </a-form>
             </div>
 
-            <div v-if="latestBatch" class="redeem-batch-summary-card">
+            <div v-if="!isReadOnly && latestBatch" class="redeem-batch-summary-card">
               最近批次：{{ latestBatch.batch_no }}，共 {{ latestBatch.count }} 个，每个 {{ latestBatch.credit_amount }} 积分
             </div>
 
@@ -488,9 +544,11 @@ onMounted(() => {
                 <div class="table-toolbar-summary">当前页已选 <span>{{ selectedRedeemItems.length }}</span> / {{ redeemItems.length }}</div>
                 <div class="table-toolbar-actions">
                   <a-button class="filter-reset-btn action-btn table-toolbar-btn" @click="copyKeys(selectedRedeemItems.map((item) => item.redeem_key), `已复制 ${selectedRedeemItems.length} 个兑换码`)">复制已选</a-button>
-                  <a-button class="action-btn table-toolbar-btn" :loading="batchLockingAction === 'lock'" @click="confirmBatchLock(true)">批量锁定</a-button>
-                  <a-button class="action-btn table-toolbar-btn" :loading="batchLockingAction === 'unlock'" @click="confirmBatchLock(false)">批量解锁</a-button>
-                  <a-button danger class="action-btn table-toolbar-btn" :loading="deletingBatch" @click="confirmBatchDelete">批量删除</a-button>
+                  <template v-if="!isReadOnly">
+                    <a-button class="action-btn table-toolbar-btn" :loading="batchLockingAction === 'lock'" @click="confirmBatchLock(true)">批量锁定</a-button>
+                    <a-button class="action-btn table-toolbar-btn" :loading="batchLockingAction === 'unlock'" @click="confirmBatchLock(false)">批量解锁</a-button>
+                    <a-button danger class="action-btn table-toolbar-btn" :loading="deletingBatch" @click="confirmBatchDelete">批量删除</a-button>
+                  </template>
                 </div>
               </div>
               <a-table
@@ -536,7 +594,7 @@ onMounted(() => {
                   <template v-else-if="column.dataIndex === 'used_at'">
                     {{ fmtTime(record.used_at) }}
                   </template>
-                  <template v-else-if="column.key === 'action'">
+                  <template v-else-if="!isReadOnly && column.key === 'action'">
                     <a-space>
                       <a-button
                         type="link"
@@ -730,6 +788,13 @@ onMounted(() => {
 
 .top-summary-layout {
   justify-content: space-between;
+}
+
+.warm-page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .overview-grid {

@@ -51,6 +51,8 @@ class ResetCreditsRequest(BaseModel):
 class CreateRedeemKeysBatchRequest(BaseModel):
     count: int
     credit_amount: int
+    sale_amount_yuan: Decimal | None = Field(default=None, gt=0)
+    is_gift: bool = False
 
 
 class CreateOfflineOrderRequest(BaseModel):
@@ -73,6 +75,8 @@ class RedeemKeyOut(BaseModel):
     id: int
     redeem_key: str
     credit_amount: int
+    sale_amount_yuan: float | None = None
+    is_gift: bool = False
     batch_no: str
     source: str = "system"
     status: str
@@ -90,6 +94,8 @@ class RedeemKeyOut(BaseModel):
 class RedeemKeyBatchOut(BaseModel):
     batch_no: str
     credit_amount: int
+    sale_amount_yuan: float | None = None
+    is_gift: bool = False
     count: int
     items: list[RedeemKeyOut]
 
@@ -383,11 +389,100 @@ class DailyReportTestOut(BaseModel):
     task_success_count: int
     task_failed_count: int
     credit_consumed: int
+    new_user_count: int
 
 
 class DailyReportRangeRequest(BaseModel):
     start_date: datetime
     end_date: datetime
+
+
+class WecomEventFieldOut(BaseModel):
+    key: str
+    label: str
+    type: str
+    optional: bool = True
+    default: bool | None = None
+    options: list[dict] = Field(default_factory=list)
+
+
+class WecomEventVariableOut(BaseModel):
+    key: str
+    label: str
+    example: str | int | float | bool | None = None
+
+
+class WecomEventCatalogItemOut(BaseModel):
+    event_key: str
+    label: str
+    fields: list[WecomEventFieldOut] = Field(default_factory=list)
+    variables: list[WecomEventVariableOut] = Field(default_factory=list)
+    default_template: str = ""
+
+
+class WecomWebhookChannelOut(BaseModel):
+    id: str
+    name: str
+    webhook_url: str
+    is_enabled: bool
+    remark: str
+    rule_count: int = 0
+    updated_at: datetime | None = None
+
+
+class WecomWebhookChannelWriteRequest(BaseModel):
+    name: str
+    webhook_url: str = ""
+    is_enabled: bool = False
+    remark: str = ""
+
+
+class WecomWebhookChannelUpdateRequest(BaseModel):
+    name: str | None = None
+    webhook_url: str | None = None
+    is_enabled: bool | None = None
+    remark: str | None = None
+
+
+class WecomWebhookChannelTestOut(BaseModel):
+    sent: bool
+    channel_id: str
+
+
+class WecomNotifyRuleOut(BaseModel):
+    id: str
+    channel_id: str
+    channel_name: str
+    event_key: str
+    event_label: str
+    name: str
+    is_enabled: bool
+    conditions: dict = Field(default_factory=dict)
+    template_markdown: str = ""
+    updated_at: datetime | None = None
+
+
+class WecomNotifyRuleWriteRequest(BaseModel):
+    channel_id: str
+    event_key: str
+    name: str = ""
+    is_enabled: bool = True
+    conditions: dict = Field(default_factory=dict)
+    template_markdown: str = ""
+
+
+class WecomNotifyRuleUpdateRequest(BaseModel):
+    channel_id: str | None = None
+    event_key: str | None = None
+    name: str | None = None
+    is_enabled: bool | None = None
+    conditions: dict | None = None
+    template_markdown: str | None = None
+
+
+class WecomNotifyRuleTestOut(BaseModel):
+    sent: bool
+    rule_id: str
 
 
 class ApiAlertApiStatOut(BaseModel):

@@ -1122,6 +1122,8 @@ export interface AdminRedeemKey {
   id: number;
   redeem_key: string;
   credit_amount: number;
+  sale_amount_yuan?: number | null;
+  is_gift: boolean;
   batch_no: string;
   source?: "system" | "agent";
   status: RedeemKeyStatus;
@@ -1141,11 +1143,15 @@ export interface AgentOverview {
   unused_redeem_credits: number;
   issuable_credits: number;
   redeemed_credits: number;
+  username?: string;
+  user_id?: string;
 }
 
 export interface AdminRedeemKeyBatchResult {
   batch_no: string;
   credit_amount: number;
+  sale_amount_yuan?: number | null;
+  is_gift: boolean;
   count: number;
   items: AdminRedeemKey[];
 }
@@ -1317,11 +1323,79 @@ export interface AdminDailyReportTestResult {
   task_success_count: number;
   task_failed_count: number;
   credit_consumed: number;
+  new_user_count: number;
 }
 
 export interface AdminDailyReportRangePayload {
   start_date: string;
   end_date: string;
+}
+
+export interface WecomEventFieldOption {
+  value: string;
+  label: string;
+}
+
+export interface WecomEventField {
+  key: string;
+  label: string;
+  type: "number" | "boolean" | "multi_select" | string;
+  optional?: boolean;
+  default?: boolean | null;
+  options?: WecomEventFieldOption[];
+}
+
+export interface WecomEventVariable {
+  key: string;
+  label: string;
+  example?: string | number | boolean | null;
+}
+
+export interface WecomEventCatalogItem {
+  event_key: string;
+  label: string;
+  fields: WecomEventField[];
+  variables: WecomEventVariable[];
+  default_template: string;
+}
+
+export interface AdminWecomWebhookChannel {
+  id: string;
+  name: string;
+  webhook_url: string;
+  is_enabled: boolean;
+  remark: string;
+  rule_count: number;
+  updated_at?: string | null;
+}
+
+export interface AdminWecomWebhookChannelPayload {
+  name: string;
+  webhook_url?: string;
+  is_enabled?: boolean;
+  remark?: string;
+}
+
+export interface AdminWecomNotifyRule {
+  id: string;
+  channel_id: string;
+  channel_name: string;
+  event_key: string;
+  event_label: string;
+  name: string;
+  is_enabled: boolean;
+  conditions: Record<string, unknown>;
+  template_markdown: string;
+  updated_at?: string | null;
+}
+
+export interface AdminWecomNotifyRulePayload {
+  channel_id: string;
+  event_key: string;
+  name?: string;
+  is_enabled?: boolean;
+  conditions?: Record<string, unknown>;
+  template_markdown?: string;
 }
 
 export interface AdminAnalyticsBreakdown {

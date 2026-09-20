@@ -1,11 +1,14 @@
+import re
 import secrets
 import string
 from datetime import datetime
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from fastapi import HTTPException, status
-from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, or_
+from sqlalchemy.orm import Session, aliased, joinedload
 
+from app.models.credit_log import CreditLog
 from app.models.credit_redeem_key import CreditRedeemKey
 from app.models.user import User
 from app.services.business_id_service import get_user_by_business_id, user_external_id
@@ -17,7 +20,7 @@ from app.services.user_credit_service import (
     get_user_credit_account,
     get_user_credit_balance,
 )
-from app.services.wecom_notify_service import format_wecom_user_label, send_wecom_markdown
+from app.services.wecom_notify_service import dispatch_wecom_event, format_wecom_user_label
 from app.utils.datetime_utils import now_local
 
 REDEEM_KEY_ALPHABET = string.ascii_uppercase + string.digits
@@ -38,6 +41,24 @@ def _generate_batch_no() -> str:
     return f"RK{datetime.now().strftime('%Y%m%d%H%M%S')}{secrets.randbelow(1000):03d}"
 
 
+def _sale_amount_yuan_to_fen(amount_yuan: Decimal | int | float | str | None, *, is_gift: bool) -> int | None:
+    if is_gift or amount_yuan is None:
+        return None
+    try:
+        normalized = Decimal(str(amount_yuan)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    except (InvalidOperation, ValueError) as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="金额格式不正确") from exc
+    if normalized <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="金额必须大于 0")
+    return int((normalized * Decimal("100")).to_integral_value(rounding=ROUND_HALF_UP))
+
+
+def _sale_amount_fen_to_yuan(amount_fen: int | None) -> float | None:
+    if amount_fen is None:
+        return None
+    return round(int(amount_fen) / 100, 2)
+
+
 def _serialize_redeem_key(row: CreditRedeemKey) -> dict:
     used_by = row.used_by_user
     creator = row.creator
@@ -45,6 +66,8 @@ def _serialize_redeem_key(row: CreditRedeemKey) -> dict:
         "id": row.id,
         "redeem_key": row.redeem_key,
         "credit_amount": int(row.credit_amount or 0),
+        "sale_amount_yuan": _sale_amount_fen_to_yuan(row.sale_amount_fen),
+        "is_gift": bool(row.is_gift),
         "batch_no": row.batch_no,
         "status": row.status,
         "source": row.source or REDEEM_KEY_SOURCE_SYSTEM,
@@ -123,14 +146,31 @@ def _send_redeem_success_notification(db: Session, *, row: CreditRedeemKey, user
     credit_account = get_user_credit_account(db, user.id, create_if_missing=False)
     remain_credit = int(credit_account.remain_credit or 0) if credit_account else 0
     used_credit = int(credit_account.used_credit or 0) if credit_account else 0
-    send_wecom_markdown(
-        "## 🎁 兑换码兑换成功\n"
+    gift_title = "（赠送）" if bool(row.is_gift) else ""
+    gift_line = "> 🏷️ 类型: **赠送**\n" if bool(row.is_gift) else ""
+    time_text = now_local().strftime("%Y-%m-%d %H:%M:%S")
+    dispatch_wecom_event(
+        "redeem_success",
+        f"## 🎁 兑换码兑换成功{gift_title}\n"
         f"> 👤 用户: **{user_label}**\n"
         f"> 🔑 兑换码: `{row.redeem_key}`\n"
+        f"{gift_line}"
         f"> ⚡ 兑换积分: **{int(row.credit_amount or 0)}**\n"
         f"> ⚡ 已使用积分: **{used_credit}**\n"
         f"> ⚡ 剩余积分: **{remain_credit}**\n"
-        f"> ⏰ 兑换时间: {now_local().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"> ⏰ 兑换时间: {time_text}",
+        {
+            "is_gift": bool(row.is_gift),
+            "user_label": user_label,
+            "redeem_key": row.redeem_key,
+            "gift_title": gift_title,
+            "gift_line": gift_line,
+            "gift_label": "赠送" if bool(row.is_gift) else "售卖",
+            "credit_amount": int(row.credit_amount or 0),
+            "used_credit": used_credit,
+            "remain_credit": remain_credit,
+            "time": time_text,
+        },
     )
 
 
@@ -141,6 +181,8 @@ def _create_redeem_key_rows(
     credit_amount: int,
     creator_id: int,
     source: str,
+    sale_amount_fen: int | None = None,
+    is_gift: bool = False,
 ) -> tuple[str, list[CreditRedeemKey]]:
     batch_no = _generate_batch_no()
     rows: list[CreditRedeemKey] = []
@@ -162,6 +204,8 @@ def _create_redeem_key_rows(
         row = CreditRedeemKey(
             redeem_key=candidate,
             credit_amount=credit_amount,
+            sale_amount_fen=sale_amount_fen,
+            is_gift=bool(is_gift),
             batch_no=batch_no,
             status=REDEEM_KEY_STATUS_ENABLED,
             source=source,
@@ -181,22 +225,41 @@ def _validate_batch(count: int, credit_amount: int) -> None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="积分值必须大于 0")
 
 
-def create_redeem_key_batch(db: Session, *, count: int, credit_amount: int, admin_user: User, source: str = REDEEM_KEY_SOURCE_SYSTEM) -> dict:
+def create_redeem_key_batch(
+    db: Session,
+    *,
+    count: int,
+    credit_amount: int,
+    admin_user: User,
+    source: str = REDEEM_KEY_SOURCE_SYSTEM,
+    sale_amount_yuan: Decimal | int | float | str | None = None,
+    is_gift: bool = False,
+) -> dict:
     _validate_batch(count, credit_amount)
     if source != REDEEM_KEY_SOURCE_SYSTEM:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="管理员只能生成系统兑换码")
 
+    sale_amount_fen = _sale_amount_yuan_to_fen(sale_amount_yuan, is_gift=is_gift)
     batch_no, rows = _create_redeem_key_rows(
         db,
         count=count,
         credit_amount=credit_amount,
         creator_id=admin_user.id,
         source=REDEEM_KEY_SOURCE_SYSTEM,
+        sale_amount_fen=sale_amount_fen,
+        is_gift=is_gift,
     )
     db.commit()
     for row in rows:
         db.refresh(row)
-    return {"batch_no": batch_no, "credit_amount": credit_amount, "count": len(rows), "items": [_serialize_redeem_key(row) for row in rows]}
+    return {
+        "batch_no": batch_no,
+        "credit_amount": credit_amount,
+        "sale_amount_yuan": _sale_amount_fen_to_yuan(sale_amount_fen),
+        "is_gift": bool(is_gift),
+        "count": len(rows),
+        "items": [_serialize_redeem_key(row) for row in rows],
+    }
 
 
 def create_agent_redeem_key_batch(db: Session, *, count: int, credit_amount: int, agent: User) -> dict:
@@ -228,6 +291,7 @@ def list_redeem_keys(
     credit_amount: int | None = None,
     status_filter: str | None = None,
     is_used: bool | None = None,
+    is_gift: bool | None = None,
     used_by: str | None = None,
     created_by: str | None = None,
     source: str | None = None,
@@ -247,6 +311,10 @@ def list_redeem_keys(
         query = query.filter(CreditRedeemKey.used_at.is_not(None))
     elif is_used is False:
         query = query.filter(CreditRedeemKey.used_at.is_(None))
+    if is_gift is True:
+        query = query.filter(CreditRedeemKey.is_gift.is_(True))
+    elif is_gift is False:
+        query = query.filter(CreditRedeemKey.is_gift.is_(False))
     if used_by:
         keyword = f"%{used_by.strip()}%"
         query = query.join(CreditRedeemKey.used_by_user, isouter=True).filter((User.username.ilike(keyword)) | (User.email.ilike(keyword)))
@@ -308,11 +376,92 @@ def get_agent_redeem_overview(db: Session, *, agent: User) -> dict:
         "unused_redeem_credits": unused_redeem_credits,
         "issuable_credits": max(pool_credits - unused_redeem_credits, 0),
         "redeemed_credits": int(redeemed_credits or 0),
+        "username": agent.username or "",
+        "user_id": user_external_id(agent),
     }
+
+
+def get_agent_user(db: Session, user_id: str) -> User:
+    user = get_user_by_business_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
+    if user.role != "agent":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="目标用户不是代理人")
+    return user
 
 
 def list_agent_redeem_keys(db: Session, *, agent: User, **kwargs) -> dict:
     return list_redeem_keys(db, created_by=user_external_id(agent), source=REDEEM_KEY_SOURCE_AGENT, **kwargs)
+
+
+def _extract_redeem_key_from_description(description: str | None) -> str:
+    text = (description or "").upper()
+    match = re.search(r"\b[A-Z0-9]{16}\b", text)
+    return match.group(0) if match else ""
+
+
+def list_agent_credit_logs(
+    db: Session,
+    *,
+    agent: User,
+    page: int = 1,
+    page_size: int = 20,
+    user_keyword: str | None = None,
+    log_type: str | None = None,
+    redeem_key: str | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+) -> dict:
+    operator_alias = aliased(User)
+    base_query = (
+        db.query(CreditLog)
+        .outerjoin(operator_alias, CreditLog.operator)
+        .filter(
+            CreditLog.user_id == agent.id,
+            CreditLog.credit_type == AGENT_POOL_CREDIT_TYPE,
+        )
+    )
+    if user_keyword:
+        keyword = f"%{user_keyword.strip()}%"
+        base_query = base_query.filter(or_(operator_alias.username.ilike(keyword), operator_alias.email.ilike(keyword)))
+    if log_type:
+        base_query = base_query.filter(CreditLog.type == log_type)
+    if redeem_key:
+        base_query = base_query.filter(CreditLog.description.ilike(f"%{redeem_key.strip().upper()}%"))
+    if start_date:
+        base_query = base_query.filter(CreditLog.created_at >= start_date)
+    if end_date:
+        base_query = base_query.filter(CreditLog.created_at <= end_date)
+    total = int(base_query.count() or 0)
+    redeemed_credits = int(
+        base_query.filter(CreditLog.type == "agent_pool_deduct")
+        .with_entities(func.coalesce(func.sum(-CreditLog.amount), 0))
+        .scalar()
+        or 0
+    )
+    rows = (
+        base_query.options(joinedload(CreditLog.operator))
+        .order_by(CreditLog.created_at.desc(), CreditLog.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return {
+        "total": total,
+        "redeemed_credits": redeemed_credits,
+        "items": [
+            {
+                "id": int(row.id),
+                "amount": int(row.amount or 0),
+                "type": row.type,
+                "redeem_key": _extract_redeem_key_from_description(row.description),
+                "description": row.description or "",
+                "operator_name": row.operator.username if row.operator else "",
+                "created_at": row.created_at,
+            }
+            for row in rows
+        ],
+    }
 
 
 def update_agent_redeem_key_status(db: Session, *, agent: User, key_id: int, new_status: str) -> dict:

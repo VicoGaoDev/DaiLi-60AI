@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import datePickerZhCN from "ant-design-vue/es/date-picker/locale/zh_CN";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import type { Dayjs } from "dayjs";
-import { PlusOutlined, ReloadOutlined, SearchOutlined, TeamOutlined, WalletOutlined } from "@ant-design/icons-vue";
+import { EyeOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, TeamOutlined, WalletOutlined } from "@ant-design/icons-vue";
 import { allocateCredits, listOfflineOrders, listUsers } from "@/api/admin";
 import { isSessionExpiredError } from "@/lib/authError";
 import type { AdminOfflineOrder, AdminUser } from "@/types";
 
 dayjs.locale("zh-cn");
 
+const router = useRouter();
 const agents = ref<AdminUser[]>([]);
 const agentOptions = ref<AdminUser[]>([]);
 const agentTotal = ref(0);
@@ -47,7 +49,7 @@ const agentColumns = [
   { title: "个人积分", dataIndex: "personal_credits", width: 110 },
   { title: "状态", dataIndex: "status", width: 90 },
   { title: "创建时间", dataIndex: "created_at", width: 170 },
-  { title: "操作", key: "action", width: 130, fixed: "right" as const },
+  { title: "操作", key: "action", width: 220, fixed: "right" as const },
 ];
 
 const allocationColumns = [
@@ -85,6 +87,14 @@ function resetForm() {
   form.amount = undefined;
   form.amount_yuan = undefined;
   form.description = "";
+}
+
+function openAgentOverview(agent: AdminUser) {
+  void router.push({
+    name: "AdminAgentOverview",
+    params: { userId: agent.id },
+    query: { username: agent.username },
+  });
 }
 
 function openCreateModal(agent?: AdminUser) {
@@ -330,10 +340,16 @@ onMounted(() => {
             {{ fmtDateTime(record.created_at) }}
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-button type="primary" class="warm-primary-btn action-btn" @click="openCreateModal(record)">
-              <template #icon><WalletOutlined /></template>
-              分配
-            </a-button>
+            <div class="table-actions">
+              <a-button class="warm-secondary-btn action-btn" @click="openAgentOverview(record)">
+                <template #icon><EyeOutlined /></template>
+                查看
+              </a-button>
+              <a-button type="primary" class="warm-primary-btn action-btn" @click="openCreateModal(record)">
+                <template #icon><WalletOutlined /></template>
+                分配
+              </a-button>
+            </div>
           </template>
         </template>
       </a-table>
@@ -636,6 +652,12 @@ onMounted(() => {
 .amount-text {
   color: #a05f00;
   font-weight: 700;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .action-btn {

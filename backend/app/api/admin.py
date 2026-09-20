@@ -11,11 +11,12 @@ from app.schemas.admin import (
     UpdateWhitelistRequest, ResetPasswordRequest, StatsOut, AllocateCreditsRequest, ResetCreditsRequest, CreditLogOut,
     CreateRedeemKeysBatchRequest, RedeemKeyBatchOut, RedeemKeyOut, UpdateRedeemKeyStatusRequest, PaymentOrderAdminOut,
     CreateOfflineOrderRequest, OfflineOrderOut,
-    AnalyticsSummaryOut, AnalyticsTimeseriesOut, AnalyticsBreakdownOut, AnalyticsRedeemRevenueOut, AnalyticsRevenueTimeseriesOut, ErrorAnalyticsOut, ErrorCategoryTimeseriesOut, ErrorTaskListOut, DailyReportTestOut, DailyReportRangeRequest, ApiAlertTestOut,
+    AnalyticsSummaryOut, AnalyticsTimeseriesOut, AnalyticsBreakdownOut, AnalyticsRedeemRevenueOut, AnalyticsRevenueTimeseriesOut, ErrorAnalyticsOut, ErrorCategoryTimeseriesOut, ErrorTaskListOut, DailyReportTestOut, DailyReportRangeRequest, WecomEventCatalogItemOut, WecomWebhookChannelOut, WecomWebhookChannelWriteRequest, WecomWebhookChannelUpdateRequest, WecomWebhookChannelTestOut, WecomNotifyRuleOut, WecomNotifyRuleWriteRequest, WecomNotifyRuleUpdateRequest, WecomNotifyRuleTestOut, ApiAlertTestOut,
     AdminLedgerCreateRequest, AdminLedgerUpdateRequest, AdminLedgerOut,
     AdminUserListOut, AdminUserPromoDashboardOut,
     VideoStatsOut,
 )
+from app.schemas.agent import AgentCreditLogListOut, AgentOverviewOut, AgentRedeemKeyListOut
 from app.schemas.canvas import CanvasListResponse
 from app.schemas.chat import ChatMessageListOut, ChatSessionAdminListOut, ChatSessionAdminOut
 from app.schemas.task import TaskOut
@@ -45,7 +46,15 @@ from app.services.admin_service import (
     get_analytics_payment_revenue, get_analytics_offline_order_revenue, get_analytics_revenue_timeseries, get_error_analytics, get_error_category_timeseries, get_error_tasks,
     get_video_stats, get_video_analytics_summary, get_video_analytics_timeseries, get_video_analytics_breakdown,
 )
-from app.services.credit_redeem_service import create_redeem_key_batch, list_redeem_keys, update_redeem_key_status
+from app.services.credit_redeem_service import (
+    create_redeem_key_batch,
+    get_agent_redeem_overview,
+    get_agent_user,
+    list_agent_credit_logs,
+    list_agent_redeem_keys,
+    list_redeem_keys,
+    update_redeem_key_status,
+)
 from app.services.promo_service import get_user_promo_dashboard_for_admin
 from app.services.feedback_service import (
     close_feedback,
@@ -64,6 +73,19 @@ from app.services.chat_service import get_admin_session, list_admin_messages, li
 from app.services.image_delivery_service import get_optional_cos_config, serialize_task
 from app.services.task_service import get_task_details
 from app.services.daily_report_service import DailyReportSendResult, send_previous_day_report, send_range_report
+from app.services.wecom_channel_service import (
+    create_wecom_channel,
+    create_wecom_rule,
+    delete_wecom_channel,
+    delete_wecom_rule,
+    get_wecom_event_catalog,
+    list_wecom_channels,
+    list_wecom_rules,
+    test_wecom_channel,
+    test_wecom_rule,
+    update_wecom_channel,
+    update_wecom_rule,
+)
 from app.services.api_alert_service import ApiAlertRunResult, execute_api_alerts
 from app.services.video_task_service import (
     expire_stale_video_tasks,
@@ -104,6 +126,7 @@ def _format_daily_report_result(result: DailyReportSendResult) -> dict:
         "task_success_count": stats.task_success_count,
         "task_failed_count": stats.task_failed_count,
         "credit_consumed": stats.credit_consumed,
+        "new_user_count": stats.new_user_count,
     }
 
 
@@ -318,7 +341,14 @@ def admin_create_redeem_keys_batch(
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    return create_redeem_key_batch(db, count=body.count, credit_amount=body.credit_amount, admin_user=admin)
+    return create_redeem_key_batch(
+        db,
+        count=body.count,
+        credit_amount=body.credit_amount,
+        admin_user=admin,
+        sale_amount_yuan=body.sale_amount_yuan,
+        is_gift=body.is_gift,
+    )
 
 
 @router.get("/redeem-keys", response_model=dict)
@@ -330,6 +360,7 @@ def admin_list_redeem_keys(
     credit_amount: Optional[int] = Query(None, ge=1),
     status_filter: Optional[str] = Query(None, alias="status", pattern="^(enabled|disabled)$"),
     is_used: Optional[bool] = Query(None),
+    is_gift: Optional[bool] = Query(None),
     used_by: Optional[str] = Query(None),
     created_by: Optional[str] = Query(None),
     source: Optional[str] = Query(None, pattern="^(system|agent)$"),
@@ -347,6 +378,7 @@ def admin_list_redeem_keys(
         credit_amount=credit_amount,
         status_filter=status_filter,
         is_used=is_used,
+        is_gift=is_gift,
         used_by=used_by,
         created_by=created_by,
         source=source,
@@ -363,6 +395,73 @@ def admin_update_redeem_key_status(
     db: Session = Depends(get_db),
 ):
     return update_redeem_key_status(db, key_id=key_id, new_status=body.status)
+
+
+@router.get("/agents/{user_id}/overview", response_model=AgentOverviewOut)
+def admin_agent_overview(
+    user_id: str,
+    _user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return get_agent_redeem_overview(db, agent=get_agent_user(db, user_id))
+
+
+@router.get("/agents/{user_id}/redeem-keys", response_model=AgentRedeemKeyListOut)
+def admin_agent_redeem_keys(
+    user_id: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=200),
+    batch_no: Optional[str] = Query(None),
+    redeem_key: Optional[str] = Query(None),
+    credit_amount: Optional[int] = Query(None, ge=1),
+    status_filter: Optional[str] = Query(None, alias="status", pattern="^(enabled|disabled)$"),
+    is_used: Optional[bool] = Query(None),
+    used_by: Optional[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    _user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return list_agent_redeem_keys(
+        db,
+        agent=get_agent_user(db, user_id),
+        page=page,
+        page_size=page_size,
+        batch_no=batch_no,
+        redeem_key=redeem_key,
+        credit_amount=credit_amount,
+        status_filter=status_filter,
+        is_used=is_used,
+        used_by=used_by,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
+@router.get("/agents/{user_id}/credit-logs", response_model=AgentCreditLogListOut)
+def admin_agent_credit_logs(
+    user_id: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    user_keyword: Optional[str] = Query(None),
+    log_type: Optional[str] = Query(None, alias="type", pattern="^(allocate|agent_pool_deduct)$"),
+    redeem_key: Optional[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    _user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return list_agent_credit_logs(
+        db,
+        agent=get_agent_user(db, user_id),
+        page=page,
+        page_size=page_size,
+        user_keyword=user_keyword,
+        log_type=log_type,
+        redeem_key=redeem_key,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
 
 @router.get("/credit-logs", response_model=dict)
@@ -1117,6 +1216,144 @@ def admin_feedback_update(
         process_note=body.process_note,
         result_note=body.result_note,
     )
+
+
+@router.get("/wecom-event-catalog", response_model=list[WecomEventCatalogItemOut])
+def admin_wecom_event_catalog(_user: User = Depends(require_superadmin)):
+    return get_wecom_event_catalog()
+
+
+@router.get("/wecom-channels", response_model=list[WecomWebhookChannelOut])
+def admin_list_wecom_channels(
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    return list_wecom_channels(db)
+
+
+@router.post("/wecom-channels", response_model=WecomWebhookChannelOut)
+def admin_create_wecom_channel(
+    body: WecomWebhookChannelWriteRequest,
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    return create_wecom_channel(
+        db,
+        name=body.name,
+        webhook_url=body.webhook_url,
+        is_enabled=body.is_enabled,
+        remark=body.remark,
+    )
+
+
+@router.put("/wecom-channels/{channel_id}", response_model=WecomWebhookChannelOut)
+def admin_update_wecom_channel(
+    channel_id: str,
+    body: WecomWebhookChannelUpdateRequest,
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    if body.name is None and body.webhook_url is None and body.is_enabled is None and body.remark is None:
+        raise HTTPException(status_code=400, detail="请至少修改一项")
+    return update_wecom_channel(
+        db,
+        channel_id,
+        name=body.name,
+        webhook_url=body.webhook_url,
+        is_enabled=body.is_enabled,
+        remark=body.remark,
+    )
+
+
+@router.delete("/wecom-channels/{channel_id}")
+def admin_delete_wecom_channel(
+    channel_id: str,
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    delete_wecom_channel(db, channel_id)
+    return {"ok": True}
+
+
+@router.post("/wecom-channels/{channel_id}/test", response_model=WecomWebhookChannelTestOut)
+def admin_test_wecom_channel(
+    channel_id: str,
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    return test_wecom_channel(db, channel_id)
+
+
+@router.get("/wecom-rules", response_model=list[WecomNotifyRuleOut])
+def admin_list_wecom_rules(
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    return list_wecom_rules(db)
+
+
+@router.post("/wecom-rules", response_model=WecomNotifyRuleOut)
+def admin_create_wecom_rule(
+    body: WecomNotifyRuleWriteRequest,
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    return create_wecom_rule(
+        db,
+        channel_id=body.channel_id,
+        event_key=body.event_key,
+        name=body.name,
+        is_enabled=body.is_enabled,
+        conditions=body.conditions,
+        template_markdown=body.template_markdown,
+    )
+
+
+@router.put("/wecom-rules/{rule_id}", response_model=WecomNotifyRuleOut)
+def admin_update_wecom_rule(
+    rule_id: str,
+    body: WecomNotifyRuleUpdateRequest,
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    if (
+        body.channel_id is None
+        and body.event_key is None
+        and body.name is None
+        and body.is_enabled is None
+        and body.conditions is None
+        and body.template_markdown is None
+    ):
+        raise HTTPException(status_code=400, detail="请至少修改一项")
+    return update_wecom_rule(
+        db,
+        rule_id,
+        channel_id=body.channel_id,
+        event_key=body.event_key,
+        name=body.name,
+        is_enabled=body.is_enabled,
+        conditions=body.conditions,
+        template_markdown=body.template_markdown,
+    )
+
+
+@router.post("/wecom-rules/{rule_id}/test", response_model=WecomNotifyRuleTestOut)
+def admin_test_wecom_rule(
+    rule_id: str,
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    return test_wecom_rule(db, rule_id)
+
+
+@router.delete("/wecom-rules/{rule_id}")
+def admin_delete_wecom_rule(
+    rule_id: str,
+    _user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db),
+):
+    delete_wecom_rule(db, rule_id)
+    return {"ok": True}
 
 
 @router.post("/notify/daily-report/test", response_model=DailyReportTestOut)

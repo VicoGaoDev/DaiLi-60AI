@@ -80,7 +80,7 @@ from app.services.video_task_service import (
     is_video_task_credit_refunded,
 )
 from app.services.history_service import _calculate_task_run_time
-from app.services.wecom_notify_service import format_wecom_user_label, send_wecom_markdown
+from app.services.wecom_notify_service import dispatch_wecom_event, format_wecom_user_label
 from app.utils.datetime_utils import LOCAL_TZ, now_local, to_local_naive
 from app.utils.security import hash_password
 
@@ -601,6 +601,8 @@ def _send_user_admin_action_notification(
     detail_lines: list[str] | None = None,
 ) -> None:
     details = [line for line in (detail_lines or []) if line]
+    time_text = now_local().strftime("%Y-%m-%d %H:%M:%S")
+    detail_text = ("\n".join(details) + "\n") if details else ""
     content = (
         "## 👤 用户管理操作通知\n"
         f"> 🙋 操作人: **{_format_user_label(operator)}**\n"
@@ -608,10 +610,20 @@ def _send_user_admin_action_notification(
         f"> 🧾 用户ID: `{user_external_id(target_user)}`\n"
         f"> 🛠️ 操作类型: **{action_type}**\n"
     )
-    if details:
-        content += "\n".join(details) + "\n"
-    content += f"> ⏰ 操作时间: {now_local().strftime('%Y-%m-%d %H:%M:%S')}"
-    send_wecom_markdown(content)
+    content += detail_text
+    content += f"> ⏰ 操作时间: {time_text}"
+    dispatch_wecom_event(
+        "admin_user_action",
+        content,
+        {
+            "operator_label": _format_user_label(operator),
+            "target_user_label": _format_user_label(target_user),
+            "target_user_id": user_external_id(target_user),
+            "action_type": action_type,
+            "details": detail_text,
+            "time": time_text,
+        },
+    )
 
 
 def _yuan_to_fen(amount_yuan: Decimal | int | float | str) -> int:
@@ -874,6 +886,31 @@ def create_offline_order(
     db.add(order)
     db.commit()
     db.refresh(order)
+    amount_yuan = round(int(order.amount_fen or 0) / 100, 2)
+    amount_yuan_text = f"{amount_yuan:.2f}"
+    type_label = "退款" if order.order_type == "refund" else "购买"
+    time_text = now_local().strftime("%Y-%m-%d %H:%M:%S")
+    dispatch_wecom_event(
+        "offline_order",
+        "## 🧾 线下订单已录入\n"
+        f"> 👤 用户: **{format_wecom_user_label(user)}**\n"
+        f"> 🏷️ 类型: **{type_label}**\n"
+        f"> 💵 金额: <font color=\"warning\">¥{amount_yuan_text}</font>\n"
+        f"> ⚡ 积分: **{int(order.credit_amount or 0)}**\n"
+        f"> 📝 备注: {order.remark or '-'}\n"
+        f"> 🙋 操作人: **{format_wecom_user_label(admin)}**\n"
+        f"> ⏰ 时间: {time_text}",
+        {
+            "order_type": order.order_type,
+            "order_type_label": type_label,
+            "amount_yuan": amount_yuan_text,
+            "credit_amount": int(order.credit_amount or 0),
+            "remark": order.remark or "-",
+            "user_label": format_wecom_user_label(user),
+            "admin_label": format_wecom_user_label(admin),
+            "time": time_text,
+        },
+    )
     return _serialize_offline_order(order, user, admin)
 
 

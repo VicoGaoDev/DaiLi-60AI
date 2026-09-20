@@ -14,7 +14,7 @@ from app.models.user import User
 from app.models.user_promo_code import UserPromoCode
 from app.services.business_id_service import user_external_id
 from app.services.user_credit_service import change_user_credit_balance, get_user_credit_account
-from app.services.wecom_notify_service import format_wecom_user_label, send_wecom_markdown
+from app.services.wecom_notify_service import dispatch_wecom_event, format_wecom_user_label
 from app.utils.datetime_utils import now_local
 
 INVITE_CODE_PREFIX = "U"
@@ -444,11 +444,14 @@ def _send_referral_reward_notification(
     credit_account = get_user_credit_account(db, referrer.id, create_if_missing=False)
     remain_credit = int(credit_account.remain_credit or 0) if credit_account else 0
     used_credit = int(credit_account.used_credit or 0) if credit_account else 0
-    send_wecom_markdown(
+    source_type_label = _source_type_label(grant.source_type)
+    time_text = now_local().strftime("%Y-%m-%d %H:%M:%S")
+    dispatch_wecom_event(
+        "referral_reward",
         "## 🎉 邀请奖励已发放\n"
         f"> 👤 邀请人: **{_build_user_label(referrer)}**\n"
         f"> 🙋 被邀请用户: **{_build_user_label(invitee)}**\n"
-        f"> 🏷️ 奖励来源: **{_source_type_label(grant.source_type)}**\n"
+        f"> 🏷️ 奖励来源: **{source_type_label}**\n"
         f"> 🔖 来源编号: `{grant.source_id}`\n"
         f"> ⚡ 对方到账积分: **{int(grant.source_credits or 0)}**\n"
         f"> 🎁 奖励比例: **{int(grant.reward_rate or 0)}%**\n"
@@ -456,5 +459,18 @@ def _send_referral_reward_notification(
         f"> 🔁 第 **{int(grant.reward_index or 0)}** 次奖励\n"
         f"> ⚡ 邀请人已使用积分: **{used_credit}**\n"
         f"> ⚡ 邀请人剩余积分: **{remain_credit}**\n"
-        f"> ⏰ 发放时间: {now_local().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"> ⏰ 发放时间: {time_text}",
+        {
+            "referrer_label": _build_user_label(referrer),
+            "invitee_label": _build_user_label(invitee),
+            "source_type_label": source_type_label,
+            "source_id": grant.source_id,
+            "source_credits": int(grant.source_credits or 0),
+            "reward_rate": int(grant.reward_rate or 0),
+            "reward_credits": int(grant.reward_credits or 0),
+            "reward_index": int(grant.reward_index or 0),
+            "used_credit": used_credit,
+            "remain_credit": remain_credit,
+            "time": time_text,
+        },
     )

@@ -12,6 +12,8 @@ from app.models.task import Task
 from app.models.task_api_attempt import TaskApiAttempt
 from app.models.api_alert_run import ApiAlertRun
 from app.models.daily_report_run import DailyReportRun
+from app.models.wecom_webhook_channel import WecomWebhookChannel
+from app.models.wecom_notify_rule import WecomNotifyRule
 from app.models.image import Image
 from app.models.regenerate_log import RegenerateLog
 from app.models.api_key import ApiKey
@@ -64,6 +66,8 @@ __all__ = [
     "TaskApiAttempt",
     "ApiAlertRun",
     "DailyReportRun",
+    "WecomWebhookChannel",
+    "WecomNotifyRule",
     "Image",
     "RegenerateLog",
     "ApiKey",

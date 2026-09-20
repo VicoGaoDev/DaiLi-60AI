@@ -20,7 +20,7 @@ from app.services.business_id_service import (
 from app.services.task_service import is_task_generation_failure_credit_refunded
 from app.services.task_type_service import get_task_scene_type_map, resolve_task_type_for_task
 from app.services.user_credit_service import get_user_credit_account
-from app.services.wecom_notify_service import format_wecom_user_label, send_wecom_markdown
+from app.services.wecom_notify_service import dispatch_wecom_event, format_wecom_user_label
 from app.utils.datetime_utils import now_local
 
 VALID_FEEDBACK_STATUSES = {"pending", "processing", "completed"}
@@ -281,13 +281,22 @@ def _send_feedback_message_notification(db: Session, item: Feedback, message: Fe
     content_preview = content if len(content) <= 200 else content[:200] + "..."
     attachment_count = len(_parse_feedback_attachments(message.attachments_json))
     user_label = format_wecom_user_label(user)
-    send_wecom_markdown(
+    time_text = now_local().strftime("%Y-%m-%d %H:%M:%S")
+    dispatch_wecom_event(
+        "feedback_replied",
         "## 用户追加反馈消息\n"
         f"> 反馈单号: `{feedback_external_id(item)}`\n"
         f"> 用户: **{user_label}**\n"
-        f"> 发送时间: {now_local().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        f"> 发送时间: {time_text}\n"
         f"> 图片数量: **{attachment_count}**\n"
-        f"> 消息内容: {content_preview or '已上传图片'}"
+        f"> 消息内容: {content_preview or '已上传图片'}",
+        {
+            "feedback_id": feedback_external_id(item),
+            "user_label": user_label,
+            "time": time_text,
+            "attachment_count": attachment_count,
+            "content_preview": content_preview or "已上传图片",
+        },
     )
 
 def _send_feedback_created_notification(db: Session, item: Feedback, *, user: User) -> None:
@@ -299,16 +308,28 @@ def _send_feedback_created_notification(db: Session, item: Feedback, *, user: Us
     credit_account = get_user_credit_account(db, user.id, create_if_missing=False)
     remain_credit = int(credit_account.remain_credit or 0) if credit_account else 0
     used_credit = int(credit_account.used_credit or 0) if credit_account else 0
-    send_wecom_markdown(
+    time_text = now_local().strftime("%Y-%m-%d %H:%M:%S")
+    dispatch_wecom_event(
+        "feedback_created",
         "## 💬 用户提交新反馈\n"
         f"> 🧾 反馈单号: `{feedback_external_id(item)}`\n"
         f"> 🏷️ 类型: **{_feedback_type_label(feedback_type)}**\n"
         f"> 👤 用户: **{user_label}**\n"
         f"> ⚡ 已使用积分: **{used_credit}**\n"
         f"> ⚡ 剩余积分: **{remain_credit}**\n"
-        f"> ⏰ 提交时间: {now_local().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        f"> ⏰ 提交时间: {time_text}\n"
         f"> 🖼️ 附件数量: **{attachment_count}**\n"
-        f"> 📝 反馈内容: {content_preview}"
+        f"> 📝 反馈内容: {content_preview}",
+        {
+            "feedback_id": feedback_external_id(item),
+            "feedback_type": _feedback_type_label(feedback_type),
+            "user_label": user_label,
+            "used_credit": used_credit,
+            "remain_credit": remain_credit,
+            "time": time_text,
+            "attachment_count": attachment_count,
+            "content_preview": content_preview,
+        },
     )
 
 

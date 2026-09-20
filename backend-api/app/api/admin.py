@@ -148,7 +148,14 @@ def admin_create_redeem_keys_batch(
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    return create_redeem_key_batch(db, count=body.count, credit_amount=body.credit_amount, admin_user=admin)
+    return create_redeem_key_batch(
+        db,
+        count=body.count,
+        credit_amount=body.credit_amount,
+        admin_user=admin,
+        sale_amount_yuan=body.sale_amount_yuan,
+        is_gift=body.is_gift,
+    )
 
 
 @router.get("/redeem-keys", response_model=dict)
@@ -160,6 +167,7 @@ def admin_list_redeem_keys(
     credit_amount: Optional[int] = Query(None, ge=1),
     status_filter: Optional[str] = Query(None, alias="status", pattern="^(enabled|disabled)$"),
     is_used: Optional[bool] = Query(None),
+    is_gift: Optional[bool] = Query(None),
     used_by: Optional[str] = Query(None),
     created_by: Optional[str] = Query(None),
     source: Optional[str] = Query(None, pattern="^(system|agent)$"),
@@ -177,6 +185,7 @@ def admin_list_redeem_keys(
         credit_amount=credit_amount,
         status_filter=status_filter,
         is_used=is_used,
+        is_gift=is_gift,
         used_by=used_by,
         created_by=created_by,
         source=source,

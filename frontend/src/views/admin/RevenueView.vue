@@ -131,6 +131,7 @@ function showDailyReportResult(result: AdminDailyReportTestResult, title = "报�
       h("p", null, `线下订单录入数：${result.offline_order_count}`),
       h("p", null, `代理积分池营业额：¥${Number(result.redeem_revenue_yuan || 0).toFixed(2)}`),
       h("p", null, `代理积分池分配笔数：${result.redeem_used_count}`),
+      h("p", null, `新增用户数：${result.new_user_count}`),
       h("p", null, `任务总数：${result.task_total_count}`),
       h("p", null, `成功任务数：${result.task_success_count}`),
       h("p", null, `失败任务数：${result.task_failed_count}`),

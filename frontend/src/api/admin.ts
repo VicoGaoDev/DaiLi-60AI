@@ -13,6 +13,7 @@ import type {
   AdminAnalyticsTimeseries,
   AdminConfig,
   CosConfig,
+  AgentOverview,
   AdminUser,
   AdminUserListResponse,
   AdminPaymentOrder,
@@ -43,6 +44,11 @@ import type {
   ChatExternalApiConfigTestResult,
   AdminDailyReportTestResult,
   AdminDailyReportRangePayload,
+  AdminWecomNotifyRule,
+  AdminWecomNotifyRulePayload,
+  AdminWecomWebhookChannel,
+  AdminWecomWebhookChannelPayload,
+  WecomEventCatalogItem,
   FeedbackDetail,
   FeedbackListResponse,
   FeedbackMessage,
@@ -294,10 +300,66 @@ export function refreshAdminLedgerIncome(month: string): Promise<AdminLedger> {
   return client.post(`/admin/ledgers/${month}/refresh-income`);
 }
 
-export function createRedeemKeysBatch(count: number, creditAmount: number): Promise<AdminRedeemKeyBatchResult> {
+export function listWecomEventCatalog(): Promise<WecomEventCatalogItem[]> {
+  return client.get("/admin/wecom-event-catalog");
+}
+
+export function listWecomChannels(): Promise<AdminWecomWebhookChannel[]> {
+  return client.get("/admin/wecom-channels");
+}
+
+export function createWecomChannel(payload: AdminWecomWebhookChannelPayload): Promise<AdminWecomWebhookChannel> {
+  return client.post("/admin/wecom-channels", payload);
+}
+
+export function updateWecomChannel(
+  channelId: string,
+  payload: Partial<AdminWecomWebhookChannelPayload>,
+): Promise<AdminWecomWebhookChannel> {
+  return client.put(`/admin/wecom-channels/${channelId}`, payload);
+}
+
+export function deleteWecomChannel(channelId: string): Promise<void> {
+  return client.delete(`/admin/wecom-channels/${channelId}`);
+}
+
+export function testWecomChannel(channelId: string): Promise<{ sent: boolean; channel_id: string }> {
+  return client.post(`/admin/wecom-channels/${channelId}/test`);
+}
+
+export function listWecomRules(): Promise<AdminWecomNotifyRule[]> {
+  return client.get("/admin/wecom-rules");
+}
+
+export function createWecomRule(payload: AdminWecomNotifyRulePayload): Promise<AdminWecomNotifyRule> {
+  return client.post("/admin/wecom-rules", payload);
+}
+
+export function updateWecomRule(
+  ruleId: string,
+  payload: Partial<AdminWecomNotifyRulePayload>,
+): Promise<AdminWecomNotifyRule> {
+  return client.put(`/admin/wecom-rules/${ruleId}`, payload);
+}
+
+export function testWecomRule(ruleId: string): Promise<{ sent: boolean; rule_id: string }> {
+  return client.post(`/admin/wecom-rules/${ruleId}/test`);
+}
+
+export function deleteWecomRule(ruleId: string): Promise<void> {
+  return client.delete(`/admin/wecom-rules/${ruleId}`);
+}
+
+export function createRedeemKeysBatch(
+  count: number,
+  creditAmount: number,
+  options?: { saleAmountYuan?: number | null; isGift?: boolean },
+): Promise<AdminRedeemKeyBatchResult> {
   return client.post("/admin/redeem-keys/batch", {
     count,
     credit_amount: creditAmount,
+    sale_amount_yuan: options?.isGift ? undefined : options?.saleAmountYuan,
+    is_gift: Boolean(options?.isGift),
   });
 }
 
@@ -309,6 +371,7 @@ export function listRedeemKeys(params: {
   credit_amount?: number;
   status?: RedeemKeyStatus;
   is_used?: boolean;
+  is_gift?: boolean;
   used_by?: string;
   created_by?: string;
   source?: "system" | "agent";
@@ -320,6 +383,43 @@ export function listRedeemKeys(params: {
 
 export function updateRedeemKeyStatus(keyId: number, status: RedeemKeyStatus): Promise<AdminRedeemKey> {
   return client.post(`/admin/redeem-keys/${keyId}/status`, { status });
+}
+
+export function getAdminAgentOverview(userId: string): Promise<AgentOverview> {
+  return client.get(`/admin/agents/${userId}/overview`);
+}
+
+export function listAdminAgentRedeemKeys(
+  userId: string,
+  params?: {
+    page?: number;
+    page_size?: number;
+    batch_no?: string;
+    redeem_key?: string;
+    credit_amount?: number;
+    status?: RedeemKeyStatus;
+    is_used?: boolean;
+    used_by?: string;
+    start_date?: string;
+    end_date?: string;
+  },
+): Promise<{ total: number; items: AdminRedeemKey[] }> {
+  return client.get(`/admin/agents/${userId}/redeem-keys`, { params });
+}
+
+export function getAdminAgentCreditLogs(
+  userId: string,
+  params?: {
+    page?: number;
+    page_size?: number;
+    user_keyword?: string;
+    type?: "allocate" | "agent_pool_deduct";
+    redeem_key?: string;
+    start_date?: string;
+    end_date?: string;
+  },
+): Promise<{ total: number; redeemed_credits: number; items: CreditLog[] }> {
+  return client.get(`/admin/agents/${userId}/credit-logs`, { params });
 }
 
 export function getStats(): Promise<AdminStats> {

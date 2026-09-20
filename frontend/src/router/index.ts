@@ -216,6 +216,12 @@ const router = createRouter({
           component: () => import("@/views/admin/AgentDataView.vue"),
         },
         {
+          path: "admin/agents/:userId",
+          name: "AdminAgentOverview",
+          meta: { requiresAdmin: true, agentReadOnly: true },
+          component: () => import("@/views/agent/AgentOverviewView.vue"),
+        },
+        {
           path: "admin/redeem-keys",
           name: "RedeemKeyManage",
           meta: { requiresAdmin: true },
@@ -319,6 +325,12 @@ const router = createRouter({
           name: "AdminGeneralSettings",
           meta: { requiresAdmin: true },
           component: () => import("@/views/admin/GeneralSettingsView.vue"),
+        },
+        {
+          path: "admin/wecom-notify",
+          name: "AdminWecomNotify",
+          meta: { requiresAdmin: true, requiresSuperAdmin: true },
+          component: () => import("@/views/admin/WecomNotifyManageView.vue"),
         },
         {
           path: "admin/feedbacks",

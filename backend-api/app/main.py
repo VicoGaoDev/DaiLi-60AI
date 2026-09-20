@@ -767,6 +767,8 @@ def _ensure_credit_redeem_key_schema():
                         id INTEGER NOT NULL AUTO_INCREMENT,
                         redeem_key VARCHAR(16) NOT NULL,
                         credit_amount INTEGER NOT NULL DEFAULT 0,
+                        sale_amount_fen INTEGER NULL,
+                        is_gift TINYINT(1) NOT NULL DEFAULT 0,
                         batch_no VARCHAR(32) NOT NULL,
                         status VARCHAR(20) NOT NULL DEFAULT 'enabled',
                         source VARCHAR(20) NOT NULL DEFAULT 'system',
@@ -780,6 +782,7 @@ def _ensure_credit_redeem_key_schema():
                         UNIQUE KEY uq_credit_redeem_keys_redeem_key (redeem_key),
                         INDEX ix_credit_redeem_keys_redeem_key (redeem_key),
                         INDEX ix_credit_redeem_keys_batch_no (batch_no),
+                        INDEX ix_credit_redeem_keys_is_gift (is_gift),
                         INDEX ix_credit_redeem_keys_status (status),
                         INDEX ix_credit_redeem_keys_source (source),
                         INDEX ix_credit_redeem_keys_is_locked (is_locked),
@@ -795,6 +798,26 @@ def _ensure_credit_redeem_key_schema():
 
     credit_redeem_columns = {col["name"] for col in inspector.get_columns("credit_redeem_keys")}
     with engine.begin() as conn:
+        if "sale_amount_fen" not in credit_redeem_columns:
+            conn.execute(
+                text(
+                    """
+                    ALTER TABLE credit_redeem_keys
+                    ADD COLUMN sale_amount_fen INTEGER NULL
+                    AFTER credit_amount
+                    """
+                )
+            )
+        if "is_gift" not in credit_redeem_columns:
+            conn.execute(
+                text(
+                    """
+                    ALTER TABLE credit_redeem_keys
+                    ADD COLUMN is_gift TINYINT(1) NOT NULL DEFAULT 0
+                    AFTER sale_amount_fen
+                    """
+                )
+            )
         if "status" not in credit_redeem_columns:
             conn.execute(
                 text(

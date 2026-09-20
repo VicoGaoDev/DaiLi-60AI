@@ -293,15 +293,25 @@ class ApiAlertMarkdownTests(unittest.TestCase):
 
 class WecomAlertChannelTests(unittest.TestCase):
     def test_alert_channel_requires_dedicated_webhook(self):
+        from app.services.wecom_channel_service import env_fallback_enabled
+
+        def fake_resolve(event_key, context=None):
+            del context
+            enabled, url = env_fallback_enabled(event_key)
+            return [url] if enabled and url else []
+
         with (
             patch.object(settings, "API_ALERT_ENABLED", True),
             patch.object(settings, "WECOM_ALERT_WEBHOOK_URL", ""),
             patch.object(settings, "WECOM_NOTIFY_ENABLED", True),
             patch.object(settings, "WECOM_WEBHOOK_URL", "https://biz.example/hook"),
+            patch("app.services.wecom_channel_service.resolve_dispatch_urls", side_effect=fake_resolve),
         ):
             self.assertFalse(is_wecom_alert_enabled())
 
     def test_business_and_alert_webhooks_stay_isolated(self):
+        from app.services.wecom_channel_service import env_fallback_enabled
+
         posted = []
 
         def fake_post(url, json, timeout):
@@ -316,11 +326,23 @@ class WecomAlertChannelTests(unittest.TestCase):
 
             return Response()
 
+        def fake_resolve(event_key, context=None):
+            del context
+            enabled, url = env_fallback_enabled(event_key)
+            return [url] if enabled and url else []
+
+        def fake_targets(event_key, context=None):
+            del context
+            enabled, url = env_fallback_enabled(event_key)
+            return [{"webhook_url": url, "template_markdown": ""}] if enabled and url else []
+
         with (
             patch.object(settings, "API_ALERT_ENABLED", True),
             patch.object(settings, "WECOM_ALERT_WEBHOOK_URL", "https://alert.example/hook"),
             patch.object(settings, "WECOM_NOTIFY_ENABLED", True),
             patch.object(settings, "WECOM_WEBHOOK_URL", "https://biz.example/hook"),
+            patch("app.services.wecom_channel_service.resolve_dispatch_urls", side_effect=fake_resolve),
+            patch("app.services.wecom_channel_service.resolve_dispatch_targets", side_effect=fake_targets),
             patch("app.services.wecom_notify_service.httpx.post", side_effect=fake_post),
         ):
             self.assertTrue(is_wecom_alert_enabled())

@@ -10,6 +10,8 @@ class AgentOverviewOut(BaseModel):
     unused_redeem_credits: int = 0
     issuable_credits: int = 0
     redeemed_credits: int = 0
+    username: str = ""
+    user_id: str = ""
 
 
 class AgentCreditLogOut(BaseModel):

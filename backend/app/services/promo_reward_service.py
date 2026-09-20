@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models.promo_reward_grant import PromoRewardGrant
 from app.models.user import User
-from app.services.wecom_notify_service import format_wecom_user_label, send_wecom_markdown
+from app.services.wecom_notify_service import dispatch_wecom_event, format_wecom_user_label
 from app.utils.datetime_utils import now_local, to_local_naive
 
 PROMO_REBATE_MAX_GRANTS = 5
@@ -378,15 +378,29 @@ def _send_promo_reward_notification(
     invitee: User,
     grant: PromoRewardGrant,
 ) -> None:
-    send_wecom_markdown(
+    source_amount_yuan = f"{fen_to_yuan(grant.source_amount_fen):.2f}"
+    reward_amount_yuan = f"{fen_to_yuan(grant.reward_amount_fen):.2f}"
+    time_text = now_local().strftime("%Y-%m-%d %H:%M:%S")
+    dispatch_wecom_event(
+        "promo_reward",
         "## 💰 推广现金返利已记账\n"
         f"> 👤 推广人: **{_build_user_label(referrer)}**\n"
         f"> 🙋 被推广用户: **{_build_user_label(invitee)}**\n"
         f"> 🔖 订单号: `{grant.source_id}`\n"
-        f"> 💵 订单金额: **¥{fen_to_yuan(grant.source_amount_fen):.2f}**\n"
+        f"> 💵 订单金额: **¥{source_amount_yuan}**\n"
         f"> 🎁 返利比例: **{int(grant.reward_rate or 0)}%**\n"
-        f"> 🎁 记账返利: **¥{fen_to_yuan(grant.reward_amount_fen):.2f}**\n"
+        f"> 🎁 记账返利: **¥{reward_amount_yuan}**\n"
         f"> 🔁 第 **{int(grant.reward_index or 0)}** 次返利\n"
-        f"> ⏰ 记账时间: {now_local().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        "> ℹ️ 仅统计金额，平台不支持提现"
+        f"> ⏰ 记账时间: {time_text}\n"
+        "> ℹ️ 仅统计金额，平台不支持提现",
+        {
+            "referrer_label": _build_user_label(referrer),
+            "invitee_label": _build_user_label(invitee),
+            "source_id": grant.source_id,
+            "source_amount_yuan": source_amount_yuan,
+            "reward_rate": int(grant.reward_rate or 0),
+            "reward_amount_yuan": reward_amount_yuan,
+            "reward_index": int(grant.reward_index or 0),
+            "time": time_text,
+        },
     )
