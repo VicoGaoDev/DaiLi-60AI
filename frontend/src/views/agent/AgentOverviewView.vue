@@ -72,7 +72,7 @@ const redeemPagination = reactive({ page: 1, pageSize: 20, total: 0 });
 const logsPagination = reactive({ page: 1, pageSize: 20, total: 0 });
 
 const redeemColumns = computed(() => {
-  const columns = [
+  const columns: Array<{ title: string; dataIndex?: string; key?: string; width: number }> = [
     { title: "批次", dataIndex: "batch_no", width: 170 },
     { title: "兑换码", dataIndex: "redeem_key", width: 190 },
     { title: "积分值", dataIndex: "credit_amount", width: 88 },
