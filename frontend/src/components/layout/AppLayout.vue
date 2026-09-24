@@ -332,7 +332,6 @@ type PrimaryMenuItem = {
 
 type GenerateEntryMode = "textGenerate" | "imageEdit" | "inpaint" | "smartCutout" | "promptReverse";
 const GENERATE_MENU_ENTRY_EVENT = "banana:generate-menu-entry";
-const SHOW_PRIMARY_MENU_BADGES = true;
 const SHOW_VIDEO_MENU_ENTRY = false;
 const SHOW_PURCHASE_CREDITS_ENTRY = false;
 const SHOW_INVITE_REWARDS_ENTRY = false;
@@ -369,7 +368,6 @@ const primaryMenuItems = computed<PrimaryMenuItem[]>(() => [
     label: "AI 对话",
     iconSrc: withBaseUrl("nav-generate.svg"),
     icon: MessageOutlined,
-    badgeText: SHOW_PRIMARY_MENU_BADGES ? "新" : undefined,
   },
   { key: "generate", label: "AI 生图", iconSrc: withBaseUrl("nav-generate.svg"), icon: NavGenerateImageIcon },
   ...(SHOW_VIDEO_MENU_ENTRY

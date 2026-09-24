@@ -395,6 +395,7 @@ class GenerationModelOptionOut(BaseModel):
     custom_size_options: list["SceneOptionItem"] = []
     category_id: int | None = None
     category_name: str | None = None
+    category_description: str | None = None
     category_sort_order: int | None = None
 
 
@@ -687,6 +688,7 @@ class TaskSceneConfigOut(BaseModel):
     custom_size_options: list[SceneOptionItem]
     category_id: int | None = None
     category_name: str | None = None
+    category_description: str | None = None
     category_sort_order: int | None = None
 
 

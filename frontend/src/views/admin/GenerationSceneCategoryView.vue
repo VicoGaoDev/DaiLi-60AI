@@ -312,7 +312,7 @@ void load();
           </a-col>
         </a-row>
         <a-form-item label="分类描述">
-          <a-input v-model:value="formState.description" class="warm-input" :maxlength="255" show-count placeholder="用于后台识别，不展示给用户" />
+          <a-input v-model:value="formState.description" class="warm-input" :maxlength="255" show-count placeholder="展示在模型下拉的分类名称下方" />
         </a-form-item>
         <a-row :gutter="16">
           <a-col :span="12">

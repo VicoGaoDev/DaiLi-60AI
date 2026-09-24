@@ -7,6 +7,7 @@ import {
   CopyOutlined,
   DownloadOutlined,
   LeftOutlined,
+  LoadingOutlined,
   ReloadOutlined,
   RightOutlined,
   VideoCameraOutlined,
@@ -106,6 +107,14 @@ const showAttemptErrorSummary = computed(() => (
 const showErrorCollapseSection = computed(() => (
   (props.showErrorMessage && Boolean(detailErrorMessage.value)) || showAttemptErrorSummary.value
 ));
+const showEnhancedImageLoadingState = computed(() => {
+  const item = props.item;
+  if (!props.open || !item || item.status !== "success") return false;
+  if (!Array.isArray(item.images) || !item.images.length) {
+    return Boolean(item.image_url || item.preview_url || item.thumb_url);
+  }
+  return item.images.some((image) => isDetailEnhancedImagePending(item, image));
+});
 
 function updateViewportWidth() {
   if (typeof window === "undefined") return;
@@ -489,6 +498,13 @@ function getDetailFailureMessage(item: UserHistoryCard, image: ImageResult) {
   return getTaskImageFailureMessage(item, image);
 }
 
+function isDetailEnhancedImagePending(item: UserHistoryCard, image: Pick<ImageResult, "id" | "thumb_url" | "image_url" | "preview_url" | "status" | "image_size_bytes">) {
+  const enhancedSrc = getDetailEnhancedImageSrc(item, image);
+  if (!enhancedSrc) return false;
+  if (enhancedSrc === getDetailBaseImageSrc(item, image)) return false;
+  return !isMediaLoaded(getDetailEnhancedImageLoadKey(image));
+}
+
 function getMediaLoadKey(prefix: string, value: string | number | null | undefined) {
   return `${prefix}:${String(value ?? "")}`;
 }
@@ -682,9 +698,15 @@ function handleGenerateVideo(item: UserHistoryCard) {
       <div class="history-task-detail-panel">
         <div class="history-task-detail-header">
           <div class="history-task-detail-title">{{ title }}</div>
-          <button type="button" class="history-task-detail-close" aria-label="关闭" @click="closeDialog">
-            <CloseOutlined />
-          </button>
+          <div class="history-task-detail-header-actions">
+            <div v-if="showEnhancedImageLoadingState" class="history-task-detail-loading-status" aria-live="polite">
+              <LoadingOutlined spin />
+              <span>高清图加载中...</span>
+            </div>
+            <button type="button" class="history-task-detail-close" aria-label="关闭" @click="closeDialog">
+              <CloseOutlined />
+            </button>
+          </div>
         </div>
 
         <div class="history-task-detail-body">
@@ -1182,6 +1204,29 @@ function handleGenerateVideo(item: UserHistoryCard) {
   font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
+}
+
+.history-task-detail-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.history-task-detail-loading-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--theme-text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.history-task-detail-loading-status :deep(.anticon) {
+  font-size: 14px;
+  color: inherit;
 }
 
 .history-task-detail-close {

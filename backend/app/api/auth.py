@@ -12,6 +12,8 @@ from app.schemas.auth import (
     BindPhoneRequest,
     LoginRequest,
     LoginResponse,
+    RegisterCodeVerifyRequest,
+    RegisterCodeVerifyResponse,
     RegisterRequest,
     RegistrationEmailCheckRequest,
     RegistrationPhoneCheckRequest,
@@ -43,6 +45,7 @@ from app.services.auth_service import (
     ensure_registration_phone_available,
     register_user,
     reset_password_with_contact_code,
+    verify_registration_code,
     update_username,
 )
 from app.services.promo_service import (
@@ -115,6 +118,18 @@ def check_login_email(body: RegistrationEmailCheckRequest, db: Session = Depends
     return {"registered": True}
 
 
+@router.post("/register/verify", response_model=RegisterCodeVerifyResponse)
+async def verify_register_code(body: RegisterCodeVerifyRequest, db: Session = Depends(get_db)):
+    verification_token = await verify_registration_code(
+        db,
+        email=body.email,
+        phone=body.phone,
+        verification_id=body.verification_id,
+        verification_code=body.verification_code,
+    )
+    return RegisterCodeVerifyResponse(verification_token=verification_token)
+
+
 @router.post("/register", response_model=LoginResponse)
 async def register(body: RegisterRequest, request: Request, db: Session = Depends(get_db)):
     token, user = await register_user(
@@ -124,6 +139,7 @@ async def register(body: RegisterRequest, request: Request, db: Session = Depend
         promo_code=body.promo_code,
         verification_id=body.verification_id,
         verification_code=body.verification_code,
+        verification_token=body.verification_token,
         email=body.email,
         phone=body.phone,
     )

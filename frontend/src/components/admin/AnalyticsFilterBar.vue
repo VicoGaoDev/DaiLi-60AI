@@ -226,7 +226,7 @@ const presetOptions = computed(() => {
 }
 
 .analytics-filter-model {
-  width: 168px;
+  width: 240px;
 }
 
 .analytics-filter-unsafe {

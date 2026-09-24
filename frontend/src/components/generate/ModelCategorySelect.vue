@@ -9,6 +9,7 @@ export interface ModelCategorySelectOption {
   sortOrder?: number;
   categoryId?: number | null;
   categoryName?: string | null;
+  categoryDescription?: string | null;
   categorySortOrder?: number | null;
 }
 
@@ -56,6 +57,7 @@ const groupedCategories = computed(() => {
   const groups = new Map<number, {
     id: number;
     name: string;
+    description: string;
     sortOrder: number;
     options: ModelCategorySelectOption[];
   }>();
@@ -64,11 +66,15 @@ const groupedCategories = computed(() => {
     const existing = groups.get(item.categoryId);
     if (existing) {
       existing.options.push(item);
+      if (!existing.description && item.categoryDescription) {
+        existing.description = item.categoryDescription;
+      }
       return;
     }
     groups.set(item.categoryId, {
       id: item.categoryId,
       name: item.categoryName,
+      description: item.categoryDescription || "",
       sortOrder: item.categorySortOrder ?? 0,
       options: [item],
     });
@@ -355,6 +361,7 @@ onBeforeUnmount(() => {
           >
             <span class="model-category-select-item-main">
               <span class="model-category-select-item-label">{{ category.name }}</span>
+              <span v-if="category.description" class="model-category-select-item-desc">{{ category.description }}</span>
             </span>
             <DownOutlined
               v-if="isMobile"

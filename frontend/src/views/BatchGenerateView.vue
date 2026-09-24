@@ -627,6 +627,7 @@ function toGenerationModelOption(scene: TaskSceneConfig): GenerationModelOption 
     custom_size_options: scene.custom_size_options,
     category_id: scene.category_id ?? null,
     category_name: scene.category_name ?? null,
+    category_description: scene.category_description ?? null,
     category_sort_order: scene.category_sort_order ?? null,
   };
 }
@@ -672,6 +673,7 @@ function getModelSelectOptions(sceneType: BatchSceneMode, targetResolution = "")
     sortOrder: model.sort_order,
     categoryId: model.category_id,
     categoryName: model.category_name,
+    categoryDescription: model.category_description,
     categorySortOrder: model.category_sort_order,
   }));
 }

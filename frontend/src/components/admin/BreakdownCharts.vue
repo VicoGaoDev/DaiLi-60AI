@@ -86,93 +86,96 @@ function canvasLabel(value: string) {
   return "普通生图";
 }
 
-const statusPieOption = computed(() => ({
-  color: ["#52c41a", "#ff4d4f", "#fa8c16", "#91caff"],
-  tooltip: {
-    trigger: "item",
-    backgroundColor: "rgba(76, 52, 26, 0.92)",
-    borderWidth: 0,
-    textStyle: { color: "#fffdf8" },
-  },
-  legend: { bottom: 0 },
-  series: [
-    {
-      type: "pie",
-      radius: ["42%", "68%"],
-      data: (props.data?.status_breakdown || []).map((item) => ({
-        name: statusLabel(item.name),
-        value: item.count,
-        rawValue: item.name,
-      })),
-    },
-  ],
-}));
+type PieDatum = { name: string; value: number; rawValue: string };
 
-const modePieOption = computed(() => ({
-  color: ["#1890ff", "#722ed1", "#13c2c2"],
-  tooltip: {
-    trigger: "item",
-    backgroundColor: "rgba(76, 52, 26, 0.92)",
-    borderWidth: 0,
-    textStyle: { color: "#fffdf8" },
-  },
-  legend: { bottom: 0 },
-  series: [
-    {
-      type: "pie",
-      radius: ["42%", "68%"],
-      data: (props.data?.mode_breakdown || []).map((item) => ({
-        name: modeLabel(item.name),
-        value: item.count,
-        rawValue: item.name,
-      })),
-    },
-  ],
-}));
+function formatPiePercent(value: number, total: number) {
+  if (total <= 0) return "0%";
+  const percent = (value / total) * 100;
+  if (percent > 0 && percent < 0.1) return "<0.1%";
+  return `${percent.toFixed(1)}%`;
+}
 
-const canvasPieOption = computed(() => ({
-  color: ["#722ed1", "#13c2c2"],
-  tooltip: {
-    trigger: "item",
-    backgroundColor: "rgba(76, 52, 26, 0.92)",
-    borderWidth: 0,
-    textStyle: { color: "#fffdf8" },
-  },
-  legend: { bottom: 0 },
-  series: [
-    {
-      type: "pie",
-      radius: ["42%", "68%"],
-      data: (props.data?.canvas_breakdown || []).map((item) => ({
-        name: canvasLabel(item.name),
-        value: item.count,
-        rawValue: item.name,
-      })),
-    },
-  ],
-}));
+function formatPieCount(value: number) {
+  const count = Number(value || 0);
+  if (!Number.isFinite(count)) return "0";
+  return `${count}`;
+}
 
-const sourcePieOption = computed(() => ({
-  color: ["#1890ff", "#722ed1"],
-  tooltip: {
-    trigger: "item",
-    backgroundColor: "rgba(76, 52, 26, 0.92)",
-    borderWidth: 0,
-    textStyle: { color: "#fffdf8" },
-  },
-  legend: { bottom: 0 },
-  series: [
-    {
-      type: "pie",
-      radius: ["42%", "68%"],
-      data: (props.data?.source_breakdown || []).map((item) => ({
-        name: sourceLabel(item.name),
-        value: item.count,
-        rawValue: item.name,
-      })),
+function buildPieOption(colors: string[], data: PieDatum[]) {
+  const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  return {
+    color: colors,
+    tooltip: {
+      trigger: "item",
+      backgroundColor: "rgba(76, 52, 26, 0.92)",
+      borderWidth: 0,
+      textStyle: { color: "#fffdf8" },
+      formatter: (params: { name?: string; value?: number; percent?: number }) => (
+        `${params.name || ""}<br/>${Number(params.value || 0)}（${Number(params.percent || 0)}%）`
+      ),
     },
-  ],
-}));
+    legend: {
+      bottom: 0,
+      formatter: (name: string) => {
+        const item = data.find((entry) => entry.name === name);
+        return `${name} ${formatPiePercent(Number(item?.value || 0), total)}`;
+      },
+    },
+    series: [
+      {
+        type: "pie",
+        radius: ["42%", "68%"],
+        avoidLabelOverlap: true,
+        label: {
+          show: true,
+          formatter: (params: { value?: number }) => formatPieCount(Number(params.value || 0)),
+        },
+        labelLine: {
+          show: true,
+          length: 8,
+          length2: 8,
+        },
+        data,
+      },
+    ],
+  };
+}
+
+const statusPieOption = computed(() => buildPieOption(
+  ["#52c41a", "#ff4d4f", "#fa8c16", "#91caff"],
+  (props.data?.status_breakdown || []).map((item) => ({
+    name: statusLabel(item.name),
+    value: item.count,
+    rawValue: item.name,
+  })),
+));
+
+const modePieOption = computed(() => buildPieOption(
+  ["#1890ff", "#722ed1", "#13c2c2"],
+  (props.data?.mode_breakdown || []).map((item) => ({
+    name: modeLabel(item.name),
+    value: item.count,
+    rawValue: item.name,
+  })),
+));
+
+const canvasPieOption = computed(() => buildPieOption(
+  ["#722ed1", "#13c2c2"],
+  (props.data?.canvas_breakdown || []).map((item) => ({
+    name: canvasLabel(item.name),
+    value: item.count,
+    rawValue: item.name,
+  })),
+));
+
+const sourcePieOption = computed(() => buildPieOption(
+  ["#1890ff", "#722ed1"],
+  (props.data?.source_breakdown || []).map((item) => ({
+    name: sourceLabel(item.name),
+    value: item.count,
+    rawValue: item.name,
+  })),
+));
 
 const modelCompareOption = computed(() => ({
   color: ["#1890ff", "#fa8c16", "#52c41a"],
@@ -575,7 +578,7 @@ function handleUserCreditClick(params: { dataIndex?: number }) {
 }
 
 .breakdown-chart {
-  height: 260px;
+  height: 280px;
 }
 
 .empty-title {

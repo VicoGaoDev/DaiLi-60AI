@@ -64,8 +64,8 @@ onMounted(() => {
   padding: 0 16px;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--theme-brand-start, #ffd06d), var(--theme-brand-end, #ffaf29));
-  color: var(--theme-brand-text, #523713);
+  background: var(--theme-accent);
+  color: var(--theme-accent-contrast);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;

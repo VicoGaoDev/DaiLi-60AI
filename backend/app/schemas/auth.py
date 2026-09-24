@@ -29,13 +29,25 @@ class UserBrief(BaseModel):
 
 
 class RegisterRequest(BaseModel):
-    verification_code: str
-    verification_id: str
+    verification_code: str = ""
+    verification_id: str = ""
+    verification_token: str | None = None
     username: str | None = None
     password: str | None = None
     email: str | None = None
     phone: str | None = None
     promo_code: str | None = None
+
+
+class RegisterCodeVerifyRequest(BaseModel):
+    verification_code: str
+    verification_id: str
+    email: str | None = None
+    phone: str | None = None
+
+
+class RegisterCodeVerifyResponse(BaseModel):
+    verification_token: str
 
 
 class RegistrationEmailCheckRequest(BaseModel):

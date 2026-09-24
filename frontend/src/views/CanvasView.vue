@@ -378,6 +378,7 @@ const generationModelSelectOptions = computed(() => (
     sortOrder: model.sort_order,
     categoryId: "category_id" in model ? model.category_id : null,
     categoryName: "category_name" in model ? model.category_name : null,
+    categoryDescription: "category_description" in model ? model.category_description : null,
     categorySortOrder: "category_sort_order" in model ? model.category_sort_order : null,
   }))
 ));

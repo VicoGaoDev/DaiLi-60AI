@@ -71,6 +71,7 @@ const modelPickerOptions = computed(() => (
     sortOrder: item.sort_order,
     categoryId: item.category_id,
     categoryName: item.category_name,
+    categoryDescription: item.category_description,
     categorySortOrder: item.category_sort_order,
   }))
 ));

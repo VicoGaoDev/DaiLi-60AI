@@ -35,9 +35,23 @@ export function checkLoginEmail(email: string): Promise<{ registered: boolean }>
   return client.post("/auth/login/email-check", { email });
 }
 
+export function verifyRegistrationCode(payload: {
+  email?: string;
+  phone?: string;
+  verificationCode: string;
+  verificationId: string;
+}): Promise<{ verification_token: string }> {
+  return client.post("/auth/register/verify", {
+    email: payload.email,
+    phone: payload.phone,
+    verification_code: payload.verificationCode,
+    verification_id: payload.verificationId,
+  });
+}
+
 export function register(
   promoCode?: string,
-  verification?: { verificationCode: string; verificationId: string },
+  verification?: { verificationCode: string; verificationId: string; verificationToken?: string },
   account?: { email?: string; phone?: string; username?: string; password?: string },
 ): Promise<LoginResponse> {
   return client.post("/auth/register", {
@@ -48,6 +62,7 @@ export function register(
     promo_code: promoCode?.trim() || undefined,
     verification_code: verification?.verificationCode,
     verification_id: verification?.verificationId,
+    verification_token: verification?.verificationToken,
   });
 }
 

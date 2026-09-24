@@ -618,6 +618,7 @@ def list_generation_models(db: Session) -> list[GenerationModelOptionOut]:
             custom_size_options=json.loads(binding.custom_size_options_json or "[]"),
             category_id=category["id"] if category else None,
             category_name=category["name"] if category else None,
+            category_description=category["description"] if category else None,
             category_sort_order=category["sort_order"] if category else None,
         ))
     return items
@@ -778,6 +779,7 @@ def list_public_task_scene_configs(db: Session) -> list[TaskSceneConfigOut]:
             custom_size_options=json.loads(item.custom_size_options_json or "[]"),
             category_id=category["id"] if category else None,
             category_name=category["name"] if category else None,
+            category_description=category["description"] if category else None,
             category_sort_order=category["sort_order"] if category else None,
         ))
     return items

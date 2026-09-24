@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 class SceneCategoryInfo(TypedDict):
     id: int
     name: str
+    description: str
     sort_order: int
 
 
@@ -54,6 +55,7 @@ def build_scene_category_map(db: Session) -> dict[str, SceneCategoryInfo]:
         info: SceneCategoryInfo = {
             "id": int(item.id),
             "name": (item.name or "").strip(),
+            "description": (item.description or "").strip(),
             "sort_order": int(item.sort_order or 0),
         }
         for key in parse_scene_keys(item.scene_keys_json):

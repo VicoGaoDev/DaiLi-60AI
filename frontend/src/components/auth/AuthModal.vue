@@ -19,6 +19,7 @@ import {
   login as apiLogin,
   register as apiRegister,
   validatePromoCode,
+  verifyRegistrationCode,
 } from "@/api/auth";
 import { validateInviteCode } from "@/api/inviteRewards";
 import { NEW_USER_TRIAL_CREDITS, PHONE_USER_TRIAL_CREDITS, PROMO_CODE_REWARD_CREDITS } from "@/lib/auth";
@@ -80,8 +81,13 @@ const registerForm = reactive({
   agreedTerms: false,
 });
 const registerLoading = ref(false);
+const registerVerifyLoading = ref(false);
 const registerCodeLoading = ref(false);
 const registerCountdown = ref(0);
+const registerStep = ref<1 | 2>(1);
+const registerVerificationToken = ref("");
+const verifiedRegisterKey = ref("");
+const registerUsernameEdited = ref(false);
 let registerTimer: number | null = null;
 
 const modalOpen = computed({
@@ -139,6 +145,10 @@ function resetAuthForms() {
   registerForm.promoCode = "";
   registerForm.agreedTerms = false;
   registerCountdown.value = 0;
+  registerStep.value = 1;
+  registerVerificationToken.value = "";
+  verifiedRegisterKey.value = "";
+  registerUsernameEdited.value = false;
 }
 
 function resetForgotPasswordForm() {
@@ -192,6 +202,17 @@ watch(
   },
 );
 
+watch(authTab, (tab) => {
+  if (tab === "register") {
+    applyPromoCode();
+    preloadCloudbaseAuth();
+    return;
+  }
+  registerStep.value = 1;
+  registerVerifyLoading.value = false;
+  clearRegisterVerification();
+});
+
 watch(
   () => registerForm.email,
   () => {
@@ -209,7 +230,11 @@ watch(
 watch(registerChannel, () => {
   registerForm.verificationCode = "";
   registerForm.verificationId = "";
+  registerForm.username = "";
   registerCountdown.value = 0;
+  registerStep.value = 1;
+  registerUsernameEdited.value = false;
+  clearRegisterVerification();
 });
 
 watch(forgotPasswordChannel, () => {
@@ -359,6 +384,117 @@ async function handleForgotPasswordSubmit() {
   }
 }
 
+function clearRegisterVerification() {
+  registerVerificationToken.value = "";
+  verifiedRegisterKey.value = "";
+}
+
+function currentRegisterVerifyKey() {
+  const isPhoneRegister = registerChannel.value === "phone";
+  const account = isPhoneRegister
+    ? normalizePhone(registerForm.phone)
+    : registerForm.email.trim().toLowerCase();
+  return `${registerChannel.value}|${account}|${registerForm.verificationId}|${registerForm.verificationCode.trim()}`;
+}
+
+function defaultRegisterUsername() {
+  if (registerChannel.value === "phone") {
+    const tail = normalizePhone(registerForm.phone).slice(-4);
+    return tail.length === 4 ? tail : "";
+  }
+  const prefix = registerForm.email.trim().split("@")[0]?.trim() || "";
+  return prefix.slice(0, 20);
+}
+
+function applyRegisterUsernameDefault() {
+  if (registerUsernameEdited.value) return;
+  const suggestion = defaultRegisterUsername();
+  if (suggestion) registerForm.username = suggestion;
+}
+
+function markRegisterUsernameEdited(value: string) {
+  registerUsernameEdited.value = value !== defaultRegisterUsername();
+}
+
+function validateRegisterContact() {
+  if (registerChannel.value === "email") {
+    if (!registerForm.email) {
+      message.warning("请输入邮箱");
+      return false;
+    }
+    if (!isValidEmail(registerForm.email)) {
+      message.warning("邮箱格式不正确");
+      return false;
+    }
+    const blockedReason = getBlockedRegistrationEmailReason(registerForm.email);
+    if (blockedReason) {
+      message.warning(blockedReason);
+      return false;
+    }
+    return true;
+  }
+  if (!isValidPhone(registerForm.phone)) {
+    message.warning("请输入正确的手机号");
+    return false;
+  }
+  return true;
+}
+
+watch(currentRegisterVerifyKey, (key) => {
+  if (verifiedRegisterKey.value && key !== verifiedRegisterKey.value) {
+    clearRegisterVerification();
+  }
+});
+
+function handleRegisterBack() {
+  registerStep.value = 1;
+}
+
+async function handleRegisterNext() {
+  if (!validateRegisterContact()) return;
+  if (!/^\d{6}$/.test(registerForm.verificationCode.trim())) {
+    message.warning("请输入正确的 6 位验证码");
+    return;
+  }
+  if (!registerForm.verificationId) {
+    message.warning(registerChannel.value === "email" ? "请先获取邮箱验证码" : "请先获取短信验证码");
+    return;
+  }
+  const verifyKey = currentRegisterVerifyKey();
+  if (registerVerificationToken.value && verifiedRegisterKey.value === verifyKey) {
+    applyRegisterUsernameDefault();
+    registerStep.value = 2;
+    return;
+  }
+  registerVerifyLoading.value = true;
+  const isPhoneRegister = registerChannel.value === "phone";
+  try {
+    const result = await verifyRegistrationCode(
+      isPhoneRegister
+        ? {
+            phone: normalizePhone(registerForm.phone),
+            verificationCode: registerForm.verificationCode.trim(),
+            verificationId: registerForm.verificationId,
+          }
+        : {
+            email: registerForm.email.trim().toLowerCase(),
+            verificationCode: registerForm.verificationCode.trim(),
+            verificationId: registerForm.verificationId,
+          },
+    );
+    if (currentRegisterVerifyKey() !== verifyKey) return;
+    registerVerificationToken.value = result.verification_token;
+    verifiedRegisterKey.value = verifyKey;
+    applyRegisterUsernameDefault();
+    registerStep.value = 2;
+  } catch (err: any) {
+    clearRegisterVerification();
+    message.error(err.response?.data?.detail || err.message || "验证码校验失败");
+  } finally {
+    registerVerifyLoading.value = false;
+  }
+}
+
 async function handleSendRegisterCode() {
   if (registerChannel.value === "email") {
     if (!registerForm.email) {
@@ -418,28 +554,19 @@ async function handleSendRegisterCode() {
 }
 
 async function handleRegisterSubmit() {
+  if (registerStep.value !== 2 || !registerVerificationToken.value) {
+    message.warning("请先完成验证码验证");
+    registerStep.value = 1;
+    return;
+  }
   const isPhoneRegister = registerChannel.value === "phone";
-  const accountReady = isPhoneRegister ? registerForm.phone : registerForm.email;
-  if (!accountReady || !registerForm.verificationCode || !registerForm.password) {
-    message.warning("请完整填写注册信息");
+  if (!validateRegisterContact()) {
+    registerStep.value = 1;
     return;
   }
-  if (!isPhoneRegister && !registerForm.username) {
-    message.warning("请完整填写注册信息");
-    return;
-  }
-  if (registerChannel.value === "email") {
-    if (!isValidEmail(registerForm.email)) {
-      message.warning("邮箱格式不正确");
-      return;
-    }
-    const blockedReason = getBlockedRegistrationEmailReason(registerForm.email);
-    if (blockedReason) {
-      message.warning(blockedReason);
-      return;
-    }
-  } else if (!isValidPhone(registerForm.phone)) {
-    message.warning("请输入正确的手机号");
+  const username = registerForm.username.trim();
+  if (username.length < 2 || username.length > 20) {
+    message.warning("用户名需 2-20 个字符");
     return;
   }
   if (registerForm.password.length < 6) {
@@ -448,14 +575,6 @@ async function handleRegisterSubmit() {
   }
   if (registerForm.password !== registerForm.confirmPassword) {
     message.warning("两次密码不一致");
-    return;
-  }
-  if (!/^\d{6}$/.test(registerForm.verificationCode.trim())) {
-    message.warning("请输入正确的 6 位验证码");
-    return;
-  }
-  if (!registerForm.verificationId) {
-    message.warning(registerChannel.value === "email" ? "请先获取邮箱验证码" : "请先获取短信验证码");
     return;
   }
   let inviteOrPromoCode = normalizeInviteCode(registerForm.promoCode);
@@ -486,15 +605,17 @@ async function handleRegisterSubmit() {
       {
         verificationCode: registerForm.verificationCode.trim(),
         verificationId: registerForm.verificationId,
+        verificationToken: registerVerificationToken.value,
       },
-      registerChannel.value === "email"
+      isPhoneRegister
         ? {
-            email: registerForm.email.trim(),
-            username: registerForm.username.trim(),
+            phone: normalizePhone(registerForm.phone),
+            username,
             password: registerForm.password,
           }
         : {
-            phone: normalizePhone(registerForm.phone),
+            email: registerForm.email.trim(),
+            username,
             password: registerForm.password,
           },
     );
@@ -520,6 +641,14 @@ async function handleRegisterSubmit() {
   } finally {
     registerLoading.value = false;
   }
+}
+
+function handleRegisterFormFinish() {
+  if (registerStep.value === 1) {
+    void handleRegisterNext();
+    return;
+  }
+  void handleRegisterSubmit();
 }
 
 function sendCodeLabel(loading: boolean, verificationId: string, countdown: number) {
@@ -587,7 +716,7 @@ function sendCodeLabel(loading: boolean, verificationId: string, countdown: numb
       </a-tab-pane>
 
       <a-tab-pane key="register" tab="注册">
-        <div class="auth-channel-switch">
+        <div v-if="registerStep === 1" class="auth-channel-switch">
           <button type="button" class="auth-channel-btn" :class="{ active: registerChannel === 'email' }" @click="registerChannel = 'email'">
             邮箱注册
           </button>
@@ -595,97 +724,119 @@ function sendCodeLabel(loading: boolean, verificationId: string, countdown: numb
             手机号注册
           </button>
         </div>
-        <a-form class="auth-form" layout="vertical" :model="registerForm" @finish="handleRegisterSubmit">
-          <a-form-item v-if="registerChannel === 'email'" label="邮箱">
-            <a-input
-              v-model:value="registerForm.email"
-              size="large"
-              placeholder="请输入常用邮箱"
-              :prefix="h(MailOutlined, { style: authInputPrefixStyle })"
-              :maxlength="255"
-            />
-          </a-form-item>
-          <a-form-item v-else label="手机号">
-            <a-input
-              v-model:value="registerForm.phone"
-              size="large"
-              placeholder="请输入 11 位手机号"
-              :prefix="h(MobileOutlined, { style: authInputPrefixStyle })"
-              :maxlength="11"
-            />
-          </a-form-item>
-          <a-form-item label="验证码">
-            <div class="auth-code-row">
+        <a-form class="auth-form" layout="vertical" :model="registerForm" @finish="handleRegisterFormFinish">
+          <template v-if="registerStep === 1">
+            <a-form-item v-if="registerChannel === 'email'" label="邮箱">
               <a-input
-                v-model:value="registerForm.verificationCode"
+                v-model:value="registerForm.email"
                 size="large"
-                placeholder="请输入 6 位验证码"
-                :maxlength="6"
+                placeholder="请输入常用邮箱"
+                :prefix="h(MailOutlined, { style: authInputPrefixStyle })"
+                :maxlength="255"
+              />
+            </a-form-item>
+            <a-form-item v-else label="手机号">
+              <a-input
+                v-model:value="registerForm.phone"
+                size="large"
+                placeholder="请输入 11 位手机号"
+                :prefix="h(MobileOutlined, { style: authInputPrefixStyle })"
+                :maxlength="11"
+              />
+            </a-form-item>
+            <a-form-item label="验证码">
+              <div class="auth-code-row">
+                <a-input
+                  v-model:value="registerForm.verificationCode"
+                  size="large"
+                  placeholder="请输入 6 位验证码"
+                  :maxlength="6"
+                  @press-enter="handleRegisterNext"
+                />
+                <a-button
+                  size="large"
+                  class="auth-code-btn"
+                  :loading="registerCodeLoading"
+                  :disabled="registerCountdown > 0"
+                  @click="handleSendRegisterCode"
+                >
+                  {{ sendCodeLabel(registerCodeLoading, registerForm.verificationId, registerCountdown) }}
+                </a-button>
+              </div>
+            </a-form-item>
+            <a-form-item class="auth-verify-submit" style="margin-bottom: 8px">
+              <a-button
+                type="primary"
+                html-type="submit"
+                size="large"
+                :loading="registerVerifyLoading"
+                block
+                class="warm-primary-btn"
+              >
+                {{ registerVerifyLoading ? "验证中..." : "验证注册" }}
+              </a-button>
+            </a-form-item>
+          </template>
+          <template v-else>
+            <div class="auth-verified-account">
+              已验证 {{ registerChannel === "phone" ? registerForm.phone : registerForm.email }}
+            </div>
+            <a-form-item class="auth-username-item">
+              <template #label>
+                用户名<span class="auth-username-label-note">（{{ registerChannel === "phone" ? "默认使用手机号后 4 位，可以修改" : "默认使用邮箱前缀，可以修改" }}）</span>
+              </template>
+              <a-input
+                v-model:value="registerForm.username"
+                size="large"
+                placeholder="2-20 个字符"
+                :prefix="h(UserOutlined, { style: authInputPrefixStyle })"
+                :maxlength="20"
+                @update:value="markRegisterUsernameEdited"
+              />
+            </a-form-item>
+            <a-form-item label="密码">
+              <a-input-password
+                v-model:value="registerForm.password"
+                size="large"
+                placeholder="至少 6 位"
+                :prefix="h(LockOutlined, { style: authInputPrefixStyle })"
+              />
+            </a-form-item>
+            <a-form-item label="确认密码">
+              <a-input-password
+                v-model:value="registerForm.confirmPassword"
+                size="large"
+                placeholder="请再次输入密码"
+                :prefix="h(LockOutlined, { style: authInputPrefixStyle })"
                 @press-enter="handleRegisterSubmit"
               />
-              <a-button
-                size="large"
-                class="auth-code-btn"
-                :loading="registerCodeLoading"
-                :disabled="registerCountdown > 0"
-                @click="handleSendRegisterCode"
-              >
-                {{ sendCodeLabel(registerCodeLoading, registerForm.verificationId, registerCountdown) }}
-              </a-button>
-            </div>
-          </a-form-item>
-          <a-form-item v-if="registerChannel === 'email'" label="用户名">
-            <a-input
-              v-model:value="registerForm.username"
-              size="large"
-              placeholder="2-20 个字符"
-              :prefix="h(UserOutlined, { style: authInputPrefixStyle })"
-              :maxlength="20"
-            />
-          </a-form-item>
-          <a-form-item label="密码">
-            <a-input-password
-              v-model:value="registerForm.password"
-              size="large"
-              placeholder="至少 6 位"
-              :prefix="h(LockOutlined, { style: authInputPrefixStyle })"
-            />
-          </a-form-item>
-          <a-form-item label="确认密码">
-            <a-input-password
-              v-model:value="registerForm.confirmPassword"
-              size="large"
-              placeholder="请再次输入密码"
-              :prefix="h(LockOutlined, { style: authInputPrefixStyle })"
-              @press-enter="handleRegisterSubmit"
-            />
-          </a-form-item>
-          <a-form-item class="auth-agreement-item">
-            <a-checkbox v-model:checked="registerForm.agreedTerms">
-              我同意
-              <RouterLink to="/user-agreement" target="_blank">用户协议</RouterLink>
-              和
-              <RouterLink to="/privacy-policy" target="_blank">隐私政策</RouterLink>
-            </a-checkbox>
-          </a-form-item>
-          <a-form-item style="margin-bottom: 8px">
-            <a-button
-              type="primary"
-              html-type="submit"
-              size="large"
-              :loading="registerLoading"
-              :disabled="!registerForm.agreedTerms"
-              block
-              class="warm-primary-btn"
-            >
-              <template #icon><UserAddOutlined /></template>
-              {{ registerLoading ? "注册中..." : "注册" }}
-            </a-button>
-          </a-form-item>
-          <div v-if="registerChannel === 'phone'" class="auth-switch-hint">
-            注册后可用手机号 + 密码登录，用户名会按手机尾号自动生成
-          </div>
-          <div class="auth-switch-hint" :style="registerChannel === 'phone' ? 'margin-top: 6px' : undefined">
+            </a-form-item>
+            <a-form-item class="auth-agreement-item">
+              <a-checkbox v-model:checked="registerForm.agreedTerms">
+                我同意
+                <RouterLink to="/user-agreement" target="_blank">用户协议</RouterLink>
+                和
+                <RouterLink to="/privacy-policy" target="_blank">隐私政策</RouterLink>
+              </a-checkbox>
+            </a-form-item>
+            <a-form-item style="margin-bottom: 8px">
+              <div class="auth-step-actions">
+                <a-button size="large" class="auth-step-back" html-type="button" @click="handleRegisterBack">上一步</a-button>
+                <a-button
+                  type="primary"
+                  html-type="submit"
+                  size="large"
+                  :loading="registerLoading"
+                  :disabled="!registerForm.agreedTerms"
+                  class="warm-primary-btn"
+                >
+                  <template #icon><UserAddOutlined /></template>
+                  {{ registerLoading ? "注册中..." : "注册" }}
+                </a-button>
+              </div>
+            </a-form-item>
+          </template>
+          <div class="auth-switch-hint" style="margin-top: 6px">
             已有账号？<a @click="authTab = 'login'">去登录</a>
           </div>
         </a-form>
@@ -864,6 +1015,42 @@ function sendCodeLabel(loading: boolean, verificationId: string, countdown: numb
     &:hover {
       color: var(--theme-link-hover);
     }
+  }
+}
+
+.auth-verify-submit {
+  padding-top: 12px;
+}
+
+.auth-username-item {
+  :deep(.ant-form-item-label > label) {
+    height: auto;
+  }
+}
+
+.auth-username-label-note {
+  margin-left: 2px;
+  color: var(--theme-text-muted);
+  font-weight: 400;
+}
+
+.auth-verified-account {
+  margin: 4px 0 12px;
+  color: var(--theme-text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.auth-step-actions {
+  display: flex;
+  gap: 8px;
+
+  .auth-step-back {
+    flex: 0 0 96px;
+  }
+
+  .warm-primary-btn {
+    flex: 1;
   }
 }
 

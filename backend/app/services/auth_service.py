@@ -283,6 +283,31 @@ def _grant_registration_credits(db: Session, user: User, promo, trial_credits: i
         )
 
 
+async def verify_registration_code(
+    db: Session,
+    *,
+    email: str | None = None,
+    phone: str | None = None,
+    verification_id: str,
+    verification_code: str,
+) -> str:
+    has_email = bool((email or "").strip())
+    has_phone = bool((phone or "").strip())
+    if has_email == has_phone:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="请使用邮箱或手机号注册")
+    if has_email:
+        ensure_registration_email_available(db, email or "")
+        contact = "邮箱"
+    else:
+        ensure_registration_phone_available(db, phone or "")
+        contact = "手机号"
+    return await _verify_cloudbase_code(
+        verification_id,
+        verification_code,
+        contact=contact,
+    )
+
+
 async def register_user(
     db: Session,
     username: str | None = None,
@@ -290,6 +315,7 @@ async def register_user(
     promo_code: str | None = None,
     verification_id: str = "",
     verification_code: str = "",
+    verification_token: str | None = None,
     email: str | None = None,
     phone: str | None = None,
 ) -> tuple[str, User]:
@@ -302,23 +328,26 @@ async def register_user(
     normalized_phone = ensure_registration_phone_available(db, phone) if has_phone else None
     if not password or len(password) < 6:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="密码至少6位")
-    if normalized_email:
-        if not (username or "").strip():
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="请输入用户名")
-        normalized_username = ensure_username_available(db, username or "")
-    else:
+    provided_username = (username or "").strip()
+    if provided_username:
+        normalized_username = ensure_username_available(db, provided_username)
+    elif normalized_phone:
         normalized_username = generate_phone_username(db, normalized_phone or "")
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="请输入用户名")
     account_password = password
     password_set = True
 
-    verification_token = await _verify_cloudbase_code(
-        verification_id,
-        verification_code,
-        contact="邮箱" if normalized_email else "手机号",
-    )
+    signup_token = (verification_token or "").strip()
+    if not signup_token:
+        signup_token = await _verify_cloudbase_code(
+            verification_id,
+            verification_code,
+            contact="邮箱" if normalized_email else "手机号",
+        )
     await _signup_cloudbase_account(
         password=account_password,
-        verification_token=verification_token,
+        verification_token=signup_token,
         email=normalized_email,
         phone=normalized_phone,
     )

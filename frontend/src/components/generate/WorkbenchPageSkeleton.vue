@@ -143,10 +143,11 @@ defineProps<{
   justify-content: center;
   height: 44px;
   border-radius: 16px;
-  background: linear-gradient(180deg, var(--theme-brand-start, #ffd06d), var(--theme-brand-end, #ffaf29));
-  color: var(--theme-brand-text, #523713);
+  background: var(--theme-accent);
+  color: var(--theme-accent-contrast);
   font-size: 15px;
   font-weight: 800;
+  box-shadow: 0 18px 32px var(--theme-shadow-strong);
 }
 
 .workbench-skeleton-result {
